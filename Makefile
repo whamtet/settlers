@@ -11,4 +11,5 @@ test:
 	clj -M:test
 
 uberjar:
+    pkill java
 	clj -T:build all

@@ -65,16 +65,17 @@
        [:text (assoc robber-action :x (- x 10) :y (+ y 10) :fill "black" :font-size "2em") output]))))
 
 (defn svg [& children]
-  [:svg {:width 1300 :height 1220 :viewBox "0 0 1500 1500"}
+  [:svg {:width 1300 :height 1220 :viewBox "0 0 1500 1500"
+         :style {:position "absolute" :top 80 :left 10}}
    (map pattern ["desert" "forest" "fields" "mountains" "hills" "pasture"])
    children])
 
 (defn board-disp [game-name]
   (let [[terrains outputs] (state/get-terrain game-name)]
-    [:div#board {:style {:position "relative"}}
+    [:div#board {:position "relative"}
+     [:img {:src "/background.png"}]
      (svg
-      (map hex (range) terrains outputs))
-     [:img {:src "/background.png" :style {:position "absolute" :left 0 :top 0}}]]))
+      (map hex (range) terrains outputs))]))
 
 (defcomponent ^:endpoint board [req command ^:long robber]
   (case command
