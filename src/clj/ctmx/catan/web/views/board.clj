@@ -1,7 +1,8 @@
 (ns ctmx.catan.web.views.board
     (:require
-      [ctmx.catan.svg :refer [offset]]
-      [ctmx.catan.component :refer [defcomponent]]))
+      [ctmx.catan.state :as state]
+      [ctmx.catan.component :refer [defcomponent]]
+      [ctmx.response :as response]))
 
 ;<rect fill="black" width="300" height="300" />
 ;<polygon
@@ -13,5 +14,19 @@
   (list
     []))
 
-(defcomponent board [req]
-  [:div#board "Board " game-name ": " color])
+(defcomponent ^:endpoint board [req command]
+  (case command
+        "main-menu" (assoc response/hx-refresh :session {})
+        "delete" (do
+                   (state/delete-game game-name)
+                   (assoc response/hx-refresh :session {}))
+        [:div.container-flex
+         [:div.mt-1.ml-1
+          [:a.btn.btn-primary.mr-3
+           {:href "https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf"
+            :target "_blank"} "Rules"]
+          [:button.btn.btn-primary.mr-3
+           {:hx-post "board:main-menu"} "Main Menu"]
+          [:button.btn.btn-primary.mr-3
+           {:hx-delete "board:delete"
+            :hx-confirm "Delete game?"} "Delete Game"]]]))

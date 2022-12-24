@@ -26,9 +26,11 @@
                 :hx-post "menu:join"
                 :hx-vals {:color color :game-name game}}
                "Join as " color])])
+         (when (empty? (state/games))
+               [:div "No games, please create one below"])
          [:hr]
          [:form {:hx-post "menu:create" :hx-confirm "Create game?"}
           [:label.mr-3 "Game name"]
           [:input.mr-3 {:type "text" :required true :name "game-name"}]
-          [:input.mr-3 {:type "checkbox" :checked true :name "random"}] "Random"
-          [:input.btn.btn-primary.ml-3 {:type "submit"}]]]))
+          [:input.mr-3 {:type "checkbox" :checked true :name "random"}] "Random Map"
+          [:input.btn.btn-primary.ml-3 {:type "submit" :value "Create"}]]]))

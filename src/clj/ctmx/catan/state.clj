@@ -39,16 +39,46 @@
         [head tail] (split-at head-count terrains)]
     (concat head [:desert] tail)))
 
+(def node-rows [7 9 11 11 9 7])
+(defn node-index [i j]
+  (apply + j (take i node-rows)))
+
+(def nodes {(node-index 1 3) ["red" "settlement"]
+            (node-index 1 6) ["orange" "settlement"]
+            (node-index 2 2) ["white" "settlement"]
+            (node-index 3 2) ["red" "settlement"]
+            (node-index 3 8) ["white" "settlement"]
+            (node-index 4 2) ["blue" "settlement"]
+            (node-index 4 4) ["orange" "settlement"]
+            (node-index 4 6) ["blue" "settlement"]})
+
+(def edge-rows [6 4 8 5 10 6 10 5 8 4 6])
+(defn edge-index [i j]
+  (apply + j (take i edge-rows)))
+
+(def edges {(edge-index 2 3) "red"
+            (edge-index 2 5) "orange"
+            (edge-index 4 2) "white"
+            (edge-index 5 4) "white"
+            (edge-index 6 2) "red"
+            (edge-index 7 3) "blue"
+            (edge-index 8 1) "blue"
+            (edge-index 8 3) "orange"})
+
 (defn new-game [random?]
   (let [outputs (if random? (shuffle outputs) outputs)
         terrains (if random? (shuffle terrains) terrains)]
     {:cards (cards)
      :outputs outputs
-     :terrains (outputs->terrains outputs terrains)}))
+     :terrains (outputs->terrains outputs terrains)
+     :nodes nodes
+     :edges edges}))
 
 (defonce state (atom {}))
 
 (defn add-game [game-name random?]
   (swap! state assoc game-name (new-game random?)))
+(defn delete-game [game-name]
+  (swap! state dissoc game-name))
 
 (defn games [] (keys @state))
