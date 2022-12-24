@@ -29,4 +29,5 @@
      (when (and (pos? retries) (not-empty leftovers))))))
 
 (defn send! [game-name html]
-  (send-retry game-name (render/html html)))
+  (send-retry game-name (render/html html))
+  nil)

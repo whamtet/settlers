@@ -49,7 +49,7 @@
 (defn hex [i pattern output]
   (let [[x y :as offset] (vec+
                           (rt->xy (i->r i) (i->t i))
-                          [700 700])
+                          [807 750])
         points (for [i (range 6)]
                  (let [t (+ p6 (* i p3))]
                    (vec+ offset (rt->xy 150 t))))
@@ -65,15 +65,16 @@
        [:text (assoc robber-action :x (- x 10) :y (+ y 10) :fill "black" :font-size "2em") output]))))
 
 (defn svg [& children]
-  [:svg {:width 1400 :height 1400 :viewBox "0 0 2000 2000"}
+  [:svg {:width 1300 :height 1220 :viewBox "0 0 1500 1500"}
    (map pattern ["desert" "forest" "fields" "mountains" "hills" "pasture"])
    children])
 
 (defn board-disp [game-name]
   (let [[terrains outputs] (state/get-terrain game-name)]
-    [:div#board
+    [:div#board {:style {:position "relative"}}
      (svg
-      (map hex (range) terrains outputs))]))
+      (map hex (range) terrains outputs))
+     [:img {:src "/background.png" :style {:position "absolute" :left 0 :top 0}}]]))
 
 (defcomponent ^:endpoint board [req command ^:long robber]
   (case command
@@ -81,6 +82,5 @@
         (do
           (assert robber)
           (state/assoc-robber game-name robber)
-          (sse/send! game-name (board-disp game-name))
-          nil)
+          (sse/send! game-name (board-disp game-name)))
         (board-disp game-name)))
