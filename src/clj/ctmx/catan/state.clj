@@ -44,6 +44,8 @@
   (let [head-count (count (take-while pos? outputs))
         [head tail] (split-at head-count terrains)]
     (concat head ["desert"] tail)))
+(defn outputs->robber [outputs]
+  (count (take-while pos? outputs)))
 
 (def node-rows [6 18])
 (defn node-index [i j]
@@ -100,8 +102,9 @@
   (let [outputs (if random? (shuffle outputs) outputs)
         terrains (if random? (shuffle terrains) terrains)]
     {:cards (cards)
-     :outputs outputs
-     :terrains (outputs->terrains outputs terrains)
+     :outputs (vec outputs)
+     :terrains (vec (outputs->terrains outputs terrains))
+     :robber (outputs->robber outputs)
      :nodes nodes
      :edges edges}))
 
@@ -113,5 +116,7 @@
   (swap! state dissoc game-name))
 
 (defn games [] (keys @state))
-(defn get-state [game-name]
-  (@state game-name))
+
+(defn get-terrain [game-name]
+  (let [{:keys [terrains outputs robber]} (@state game-name)]
+    [terrains (assoc outputs robber -1)]))

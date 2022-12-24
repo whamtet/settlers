@@ -45,7 +45,7 @@
   [:pattern {:id id :x 0 :y 0 :width 1 :height 1}
    [:image {:xlink:href (str "/" id ".jpg")}]])
 
-(defn hex [i pattern center]
+(defn hex [i pattern output]
   (let [[x y :as offset] (vec+
                           (rt->xy (i->r i) (i->t i))
                           [700 700])
@@ -55,7 +55,10 @@
         fill (format "url(#%s)" pattern)]
     (list
      [:polygon {:points (pstring points) :fill fill}]
-     [:circle {:cx x :cy y :r 40 :fill "white"}])))
+     [:circle {:cx x :cy y :r 40 :fill "white"}]
+     (if (neg? output)
+       [:image {:x (- x 20) :y (- y 20) :xlink:href"/robber.png" :width 60 :height 72}]
+       [:text {:x (- x 10) :y (+ y 10) :fill "black" :font-size "2em"} output]))))
 
 (defn svg [& children]
   [:svg {:width 1400 :height 1400 :viewBox "0 0 2000 2000"}
@@ -64,7 +67,7 @@
 
 (defcomponent ^:endpoint board [req command]
   (case command
-        (let [{:keys [terrains outputs]} (state/get-state game-name)]
+        (let [[terrains outputs] (state/get-terrain game-name)]
           [:div
            (svg
             (map hex (range) terrains outputs))])))
