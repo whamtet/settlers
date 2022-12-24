@@ -1,7 +1,7 @@
 (ns ctmx.catan.web.views.board
     (:require
       [ctmx.catan.svg :refer [offset]]
-      [ctmx.core :as ctmx :refer [defcomponent]]))
+      [ctmx.catan.component :refer [defcomponent]]))
 
 ;<rect fill="black" width="300" height="300" />
 ;<polygon
@@ -14,4 +14,4 @@
     []))
 
 (defcomponent board [req]
-  [:div#board "Board"])
+  [:div#board "Board " game-name ": " color])
