@@ -21,17 +21,23 @@
          _ (range repeats)]
      {:title title :body body})))
 
-(def outputs [10 2 9
-              12 6 4 10
-              9 11 0 3 8
-              8 3 4 5
-              5 6 11])
+(def outputs [0
+              3 4 3 11 6 4
+              8 5
+              11 6
+              5 8
+              9 12
+              10 2
+              9 11])
 
-(def terrains [:mountains :pasture :forest
-               :fields :hills :pasture :hills
-               :fields :forest #_:desert :forest :mountains
-               :forest :mountains :fields :pasture
-               :hills :fields :pasture])
+(def terrains [#_:desert
+               :forest :fields :mountains :forest :hills :pasture
+               :mountains :pasture
+               :pasture :fields
+               :hills :forest
+               :fields :fields
+               :mountains :pasture
+               :forest :hills])
 
 (defn outputs->terrains [outputs terrains]
   (assert (= 1 (- (count outputs) (count terrains))))
@@ -39,31 +45,56 @@
         [head tail] (split-at head-count terrains)]
     (concat head [:desert] tail)))
 
-(def node-rows [7 9 11 11 9 7])
+(def node-rows [6 18])
 (defn node-index [i j]
   (apply + j (take i node-rows)))
 
-(def nodes {(node-index 1 3) ["red" "settlement"]
-            (node-index 1 6) ["orange" "settlement"]
-            (node-index 2 2) ["white" "settlement"]
-            (node-index 3 2) ["red" "settlement"]
-            (node-index 3 8) ["white" "settlement"]
-            (node-index 4 2) ["blue" "settlement"]
-            (node-index 4 4) ["orange" "settlement"]
-            (node-index 4 6) ["blue" "settlement"]})
+(def nodes-raw ["white"
+                nil
+                "blue"
+                nil
+                "orange"
+                nil
+                "blue"
+                nil
+                "red"
+                nil
+                "white"
+                nil
+                "red"
+                nil
+                nil
+                "orange"])
+(def nodes (into {}
+                 (for [[i color] (map-indexed list nodes-raw)
+                       :when color]
+                   [(node-index 1 i) [color "settlement"]])))
 
-(def edge-rows [6 4 8 5 10 6 10 5 8 4 6])
+(def edge-rows [6 6 18 12])
 (defn edge-index [i j]
   (apply + j (take i edge-rows)))
 
-(def edges {(edge-index 2 3) "red"
-            (edge-index 2 5) "orange"
-            (edge-index 4 2) "white"
-            (edge-index 5 4) "white"
-            (edge-index 6 2) "red"
-            (edge-index 7 3) "blue"
-            (edge-index 8 1) "blue"
-            (edge-index 8 3) "orange"})
+(def edges-raw ["white"
+                nil
+                "blue"
+                nil
+                "orange"
+                nil
+                "blue"
+                nil
+                "red"
+                nil
+                "white"
+                nil
+                nil
+                "red"
+                nil
+                "orange"])
+
+(def edges (into {}
+                 (for [[i color] (map-indexed list edges-raw)
+                       :when color]
+                   [(edge-index 2 i) color])))
 
 (defn new-game [random?]
   (let [outputs (if random? (shuffle outputs) outputs)
