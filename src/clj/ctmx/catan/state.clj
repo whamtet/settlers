@@ -30,20 +30,20 @@
               10 2
               9 11])
 
-(def terrains [#_:desert
-               :forest :fields :mountains :forest :hills :pasture
-               :mountains :pasture
-               :pasture :fields
-               :hills :forest
-               :fields :fields
-               :mountains :pasture
-               :forest :hills])
+(def terrains [#_"desert"
+               "forest" "fields" "mountains" "forest" "hills" "pasture"
+               "mountains" "pasture"
+               "pasture" "fields"
+               "hills" "forest"
+               "fields" "fields"
+               "mountains" "pasture"
+               "forest" "hills"])
 
 (defn outputs->terrains [outputs terrains]
   (assert (= 1 (- (count outputs) (count terrains))))
   (let [head-count (count (take-while pos? outputs))
         [head tail] (split-at head-count terrains)]
-    (concat head [:desert] tail)))
+    (concat head ["desert"] tail)))
 
 (def node-rows [6 18])
 (defn node-index [i j]
@@ -113,3 +113,5 @@
   (swap! state dissoc game-name))
 
 (defn games [] (keys @state))
+(defn get-state [game-name]
+  (@state game-name))
