@@ -1,6 +1,7 @@
 (ns ctmx.catan.web.views.board
     (:require
       [clojure.string :as string]
+      [ctmx.catan.sse :as sse]
       [ctmx.catan.state :as state]
       [ctmx.catan.component :refer [defcomponent]]
       [ctmx.response :as response]))
@@ -52,22 +53,34 @@
         points (for [i (range 6)]
                  (let [t (+ p6 (* i p3))]
                    (vec+ offset (rt->xy 150 t))))
-        fill (format "url(#%s)" pattern)]
+        fill (format "url(#%s)" pattern)
+        robber-action {:hx-post "board:robber"
+                       :hx-vals {:robber i}
+                       :hx-trigger "dblclick"}]
     (list
      [:polygon {:points (pstring points) :fill fill}]
-     [:circle {:cx x :cy y :r 40 :fill "white"}]
+     [:circle (assoc robber-action :cx x :cy y :r 40 :fill "white")]
      (if (neg? output)
        [:image {:x (- x 20) :y (- y 20) :xlink:href"/robber.png" :width 60 :height 72}]
-       [:text {:x (- x 10) :y (+ y 10) :fill "black" :font-size "2em"} output]))))
+       [:text (assoc robber-action :x (- x 10) :y (+ y 10) :fill "black" :font-size "2em") output]))))
 
 (defn svg [& children]
   [:svg {:width 1400 :height 1400 :viewBox "0 0 2000 2000"}
    (map pattern ["desert" "forest" "fields" "mountains" "hills" "pasture"])
    children])
 
-(defcomponent ^:endpoint board [req command]
+(defn board-disp [game-name]
+  (let [[terrains outputs] (state/get-terrain game-name)]
+    [:div#board
+     (svg
+      (map hex (range) terrains outputs))]))
+
+(defcomponent ^:endpoint board [req command ^:long robber]
   (case command
-        (let [[terrains outputs] (state/get-terrain game-name)]
-          [:div
-           (svg
-            (map hex (range) terrains outputs))])))
+        "robber"
+        (do
+          (assert robber)
+          (state/assoc-robber game-name robber)
+          (sse/send! game-name (board-disp game-name))
+          nil)
+        (board-disp game-name)))

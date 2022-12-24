@@ -25,7 +25,7 @@
    (let [available (get @connections game-name)
          leftovers (set/difference recipients (set (keys available)))]
      (doseq [[user connection] available :when (recipients user)]
-       (ws/send connection e false))
+       (ws/send e connection))
      (when (and (pos? retries) (not-empty leftovers))))))
 
 (defn send! [game-name html]

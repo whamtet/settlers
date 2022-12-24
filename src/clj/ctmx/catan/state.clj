@@ -120,3 +120,6 @@
 (defn get-terrain [game-name]
   (let [{:keys [terrains outputs robber]} (@state game-name)]
     [terrains (assoc outputs robber -1)]))
+
+(defn assoc-robber [game-name robber]
+  (swap! state assoc-in [game-name :robber] robber))
