@@ -1,5 +1,6 @@
 (ns ctmx.catan.web.routes.api
   (:require
+    [ctmx.catan.sse :as sse]
     [ctmx.catan.web.controllers.health :as health]
     [ctmx.catan.web.middleware.exception :as exception]
     [ctmx.catan.web.middleware.formats :as formats]
@@ -22,6 +23,12 @@
        :headers {"Content-Type" "text/html"}
        :session {:hi "there"}
        :body (pr-str (dissoc req :reitit.core/match))})]
+   ["/sse"
+    (fn [req]
+      (let [{:keys [game-name color]} (:session req)]
+        {:undertow/websocket
+         {:on-open (sse/add-connection game-name color)
+          :on-close-message (sse/remove-connection game-name color)}}))]
    ["/health"
     {:get health/healthcheck!}]])
 
