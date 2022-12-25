@@ -47,9 +47,36 @@
 (defn outputs->robber [outputs]
   (count (take-while pos? outputs)))
 
-(def node-rows [6 18])
-(defn node-index [i j]
-  (apply + j (take i node-rows)))
+#_
+(defn node-downgrade [v]
+  (case v
+        ;; inner
+        [1 3] [0 5]
+        [1 2] [0 0]
+        [2 4] [0 0]
+        [2 3] [0 1]
+        [3 5] [0 1]
+        [3 4] [0 2]
+        [4 0] [0 2]
+        [4 5] [0 3]
+        [5 1] [0 3]
+        [5 0] [0 4]
+        [6 2] [0 4]
+        [6 1] [0 5]
+        ;; trailing
+        [2 5] [1 1]
+        [3 0] [2 2]
+        [4 1] [3 3]
+        [5 2] [4 4]
+        [6 3] [5 5]
+        ;; outer inner
+        [7 3] [1 5]
+        [7 2] [1 0]
+        [8 4] [1 0]
+        [8 3] [1 1]
+        [8 2] [2 0]
+        [9 4] [2 0]
+        [9 3] [2 1]))
 
 (def nodes-raw ["white"
                 nil
@@ -70,11 +97,57 @@
 (def nodes (into {}
                  (for [[i color] (map-indexed list nodes-raw)
                        :when color]
-                   [(node-index 1 i) [color "settlement"]])))
+                   [(node-index [1 i]) [color "settlement"]])))
 
-(def edge-rows [6 6 18 12])
-(defn edge-index [i j]
-  (apply + j (take i edge-rows)))
+#_
+(def edge-downgrade [v]
+  (case v
+        ;; inner
+        [1 3] [0 0]
+        [2 4] [0 1]
+        [3 5] [0 2]
+        [4 0] [0 3]
+        [5 1] [0 4]
+        [6 2] [0 5]
+        ;; trailing
+        [2 5] [1 2]
+        [3 0] [2 3]
+        [4 1] [3 4]
+        [5 2] [4 5]
+        [6 3] [5 0]
+        ;; outer inner
+        [7 3] [1 0]
+        [8 4] [1 1]
+        [8 3] [2 0]
+        [9 4] [2 1]
+        [10 5] [2 2]
+        [10 4] [3 1]
+        [11 5] [3 2]
+        [12 0] [3 3]
+        [12 5] [4 2]
+        [13 0] [4 3]
+        [14 1] [4 4]
+        [14 2] [5 3]
+        [15 1] [5 4]
+        [16 2] [5 5]
+        [16 1] [6 4]
+        [17 2] [6 5]
+        [18 2] [1 5]
+        [18 3] [6 0]
+        ;; outer trailing
+        [8 5] [7 2]
+        [9 5] [8 2]
+        [10 0] [9 3]
+        [11 0] [10 3]
+        [12 1] [11 4]
+        [13 1] [12 4]
+        [14 2] [13 5]
+        [15 2] [14 5]
+        [16 3] [15 0]
+        [17 3] [16 0]
+        [18 4] [17 1]
+        v))
+
 
 (def edges-raw ["white"
                 nil
@@ -96,7 +169,7 @@
 (def edges (into {}
                  (for [[i color] (map-indexed list edges-raw)
                        :when color]
-                   [(edge-index 2 i) color])))
+                   [(edge-index [2 i]) color])))
 
 (defn new-game [random?]
   (let [outputs (if random? (shuffle outputs) outputs)
