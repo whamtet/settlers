@@ -20,12 +20,14 @@
 
 (defn settlement [offset color]
   [:polygon {:points (svg/pstring offset (scale 0.5 house))
+             :stroke "black"
              :fill color}])
 
 (defn city [offset color]
   (list
    [:polygon {:points (svg/pstring offset (scale+ 0.4 -20 house))
+              :stroke "black"
               :fill color}]
    [:polygon {:points (svg/pstring offset (scale+ 0.4 20 house))
-              :fill color}]
-   ))
+              :stroke "black"
+              :fill color}]))

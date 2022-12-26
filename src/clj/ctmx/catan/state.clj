@@ -128,7 +128,7 @@
             [4 2] ["red" "settlement"]
             [4 4] ["white" "settlement"]
             [5 4] ["red" "settlement"]
-            [5 5] ["orange" "settlement"]})
+            [6 5] ["orange" "settlement"]})
 
 (defn edge-downgrade [v]
   (case v
@@ -193,11 +193,11 @@
 (defn get-edges [game-name tile]
   (let [m (get-in @state [game-name :edges])]
     (for [i (range 6)]
-      (-> [tile i] edge-downgrade m))))
+      (m [tile i]))))
 (defn get-nodes [game-name tile]
   (let [m (get-in @state [game-name :nodes])]
     (for [i (range 6)]
-      (-> [tile i] node-downgrade m))))
+      (m [tile i]))))
 
 (defn new-game [random?]
   (let [outputs (if random? (shuffle outputs) outputs)
