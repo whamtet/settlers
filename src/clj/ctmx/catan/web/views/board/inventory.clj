@@ -9,7 +9,7 @@
         hx-include (str ".count" resource)]
     [:div
      [:input {:type "number" :name "count" :value 1 :min 1 :max count :class input-class}]
-     (for [other-color (disj state/valid-color? color)]
+     (for [other-color (-> state/valid-color? (disj color) seq (conj "bank"))]
        [:button.btn.btn-primary.mr-3
         {:hx-post "inventory:send"
          :hx-vals {:from color :resource resource :to other-color}

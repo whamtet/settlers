@@ -7,6 +7,7 @@
 
 (def colors ["red" "orange" "white" "blue"])
 (def valid-color? (set colors))
+(def valid-inv? (conj valid-color? "bank"))
 
 ;; cards
 (def cards-raw
@@ -215,7 +216,12 @@
   {"red" {"fields" 1}
    "white" {"fields" 1}
    "blue" {"forest" 1}
-   "orange" {"mountains" 1}})
+   "orange" {"mountains" 1}
+   "bank" {"fields" 17
+           "forest" 18
+           "mountains" 18
+           "hills" 19
+           "pasture" 19}})
 
 (defn new-game [random?]
   (let [outputs (if random? (shuffle outputs) outputs)
@@ -226,6 +232,8 @@
      :robber (outputs->robber outputs)
      :nodes nodes
      :edges edges
+     :cities (zipmap colors (repeat 4))
+     :settlements (zipmap colors (repeat 3))
      :inventory inventory}))
 
 (defn add-game [game-name random?]
@@ -250,8 +258,8 @@
 (defn- safe+ [a b]
   (+ (or a 0) b))
 (defn send-inv [m from resource to quantity]
-  (assert (valid-color? from))
-  (assert (valid-color? to))
+  (assert (valid-inv? from))
+  (assert (valid-inv? to))
   (assert (inv->name resource))
   (let [actual-quantity (-> quantity
                             (max 0)
