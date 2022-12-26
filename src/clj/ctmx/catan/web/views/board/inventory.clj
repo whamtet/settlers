@@ -34,7 +34,7 @@
 (defcomponent ^:endpoint inventory [req from resource to ^:long count command]
   (case command
         "send" (do
-                 (prn 'send from resource to count)
+                 (prn (java.util.Date.) 'send from resource to count)
                  (state/send-inv! game-name from resource to count)
                  (sse/send-color!
                    game-name

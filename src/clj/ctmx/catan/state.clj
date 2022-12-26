@@ -1,6 +1,7 @@
 (ns ctmx.catan.state
     (:require
-      [ctmx.catan.env :as env]))
+      [ctmx.catan.env :as env]
+      [ctmx.catan.util :as util]))
 
 (defonce state (atom {}))
 
@@ -10,14 +11,14 @@
 ;; cards
 (def cards-raw
   [["Knight" 14 "Move the robber. Steal one resource from the owner of a settlement or city adjacent to the robber’s new hex."]
-  ["Road Building" 2 "Place 2 new roads as if you had just built them."]
-  ["Year of Plenty" 2 "Take any two resources from the bank. Add them to your hand. They can be two of the same resource or two different resources."]
-  ["Monopoly" 2 "When you play this card, announce one type of resource. All other players must give you all of their resources of that type."]
-  ["University" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
-  ["Market" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
-  ["Great Hall" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
-  ["Chapel" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
-  ["Library" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]])
+   ["Road Building" 2 "Place 2 new roads as if you had just built them."]
+   ["Year of Plenty" 2 "Take any two resources from the bank. Add them to your hand. They can be two of the same resource or two different resources."]
+   ["Monopoly" 2 "When you play this card, announce one type of resource. All other players must give you all of their resources of that type."]
+   ["University" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
+   ["Market" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
+   ["Great Hall" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
+   ["Chapel" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
+   ["Library" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]])
 
 (defn cards []
   (shuffle
@@ -205,6 +206,10 @@
   (let [m (get-in @state [game-name :nodes])]
     (for [i (range 6)]
       (m [tile i]))))
+(defn nodes-for-player [game-name player]
+  (for [[node [color]] (get-in @state [game-name :nodes])
+        :when (= player color)]
+    node))
 
 (def inventory
   {"red" {"fields" 1}
@@ -257,3 +262,34 @@
 
 (defn send-inv! [game-name from resource to quantity]
   (swap! state update-in [game-name :inventory] send-inv from resource to quantity))
+
+(def no-port (zipmap terrains (repeat 4)))
+(def wildport (zipmap terrains (repeat 3)))
+(def port-order ["pasture" "hills" "forest" "fields" "mountains"])
+(def port #(hash-map (port-order %) 2))
+
+(def ports
+  (util/keymap node-downgrade
+          {[7 0] wildport
+           [7 5] wildport
+           [8 0] (port 0)
+           [8 1] (port 0)
+           [10 0] wildport
+           [10 1] wildport
+           [11 1] wildport
+           [11 2] wildport
+           [12 2] (port 1)
+           [12 3] (port 1)
+           [14 2] (port 2)
+           [14 3] (port 2)
+           [15 3] wildport
+           [15 4] wildport
+           [16 4] (port 3)
+           [16 5] (port 3)
+           [18 4] (port 4)
+           [18 5] (port 4)}))
+
+(defn trading-privileges [game-name player]
+  (->> (nodes-for-player game-name player)
+       (map ports)
+       (apply merge-with min no-port)))
