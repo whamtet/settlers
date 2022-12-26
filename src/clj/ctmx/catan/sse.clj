@@ -19,8 +19,8 @@
     (swap! connections dissoc-in [game-name color])))
 
 (defn- send-retry
-  ([game-name e]
-   (future (send-retry game-name e state/valid-color? 19)))
+  ([game-name e recipients]
+   (future (send-retry game-name e (set recipients) 19)))
   ([game-name e recipients retries]
    (let [available (get @connections game-name)
          leftovers (set/difference recipients (set (keys available)))]
@@ -28,6 +28,13 @@
        (ws/send e connection))
      (when (and (pos? retries) (not-empty leftovers))))))
 
-(defn send! [game-name html]
-  (send-retry game-name (render/html html))
-  nil)
+(defn send!
+  ([game-name html]
+   (send! game-name html state/valid-color?))
+  ([game-name html recipients]
+   (send-retry game-name (render/html html) recipients)
+   nil))
+
+(defn send-color! [game-name f colors]
+  (doseq [color colors]
+    (send! game-name (f color) #{color})))

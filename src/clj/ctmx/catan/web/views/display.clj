@@ -3,6 +3,7 @@
       [ctmx.catan.state :as state]
       [ctmx.catan.component :refer [defcomponent]]
       [ctmx.catan.web.views.board :as board]
+      [ctmx.catan.web.views.board.inventory :as inventory]
       [ctmx.response :as response]))
 
 (def menu-bar
@@ -25,4 +26,5 @@
         [:div.container-flex.p-1 {:hx-ws "connect:/api/sse"}
          [:h5 "Welcome " [:span {:style {:color color}} color] " player."]
          menu-bar
-         (board/board req)]))
+         (board/board req)
+         (inventory/inventory req)]))

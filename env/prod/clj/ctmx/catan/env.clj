@@ -10,3 +10,5 @@
                  (log/info "\n-=[ has shut down successfully]=-"))
    :middleware (fn [handler _] handler)
    :opts       {:profile :prod}})
+
+(def dev? false)

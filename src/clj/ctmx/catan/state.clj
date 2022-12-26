@@ -1,4 +1,6 @@
-(ns ctmx.catan.state)
+(ns ctmx.catan.state
+    (:require
+      [ctmx.catan.env :as env]))
 
 (defonce state (atom {}))
 
@@ -40,6 +42,11 @@
                "fields" "fields"
                "mountains" "pasture"
                "forest" "hills"])
+(def inv->name {"hills" "Brick"
+                "forest" "Lumber"
+                "mountains" "Ore"
+                "fields" "Grain"
+                "pasture" "Wool"})
 
 (defn outputs->terrains [outputs terrains]
   (assert (= 1 (- (count outputs) (count terrains))))
@@ -199,6 +206,12 @@
     (for [i (range 6)]
       (m [tile i]))))
 
+(def inventory
+  {"red" {"fields" 1}
+   "white" {"fields" 1}
+   "blue" {"forest" 1}
+   "orange" {"mountains" 1}})
+
 (defn new-game [random?]
   (let [outputs (if random? (shuffle outputs) outputs)
         terrains (if random? (shuffle terrains) terrains)]
@@ -207,10 +220,13 @@
      :terrains (vec (outputs->terrains outputs terrains))
      :robber (outputs->robber outputs)
      :nodes nodes
-     :edges edges}))
+     :edges edges
+     :inventory inventory}))
 
 (defn add-game [game-name random?]
   (swap! state assoc game-name (new-game random?)))
+(defonce _ (when env/dev? (add-game "asdf" false)))
+
 (defn delete-game [game-name]
   (swap! state dissoc game-name))
 
@@ -222,3 +238,22 @@
 
 (defn assoc-robber [game-name robber]
   (swap! state assoc-in [game-name :robber] robber))
+
+(defn get-inventory [game-name color]
+  (get-in @state [game-name :inventory color]))
+
+(defn- safe+ [a b]
+  (+ (or a 0) b))
+(defn send-inv [m from resource to quantity]
+  (assert (valid-color? from))
+  (assert (valid-color? to))
+  (assert (inv->name resource))
+  (let [actual-quantity (-> quantity
+                            (max 0)
+                            (min (get-in m [from resource] 0)))]
+    (-> m
+        (update-in [from resource] - actual-quantity)
+        (update-in [to resource] safe+ actual-quantity))))
+
+(defn send-inv! [game-name from resource to quantity]
+  (swap! state update-in [game-name :inventory] send-inv from resource to quantity))
