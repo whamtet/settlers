@@ -17,7 +17,8 @@
          :hx-confirm (format "Send %s to %s?" name other-color)} "Send to " other-color])]))
 
 (defn disp-inventory [game-name color]
-  (let [inv (state/get-inventory game-name color)]
+  (let [inv (state/get-inventory game-name color)
+        prices (state/trading-privileges game-name color)]
     [:div#inventory
      [:h2 "Inventory"]
      [:table
@@ -29,7 +30,23 @@
           [:td (inv resource 0)]
           [:td
            (when (pos? count)
-                 (send-form color resource name count))]])]]]))
+                 (send-form color resource name count))]])]]
+     [:hr]
+     [:h3 "Buy"]
+     [:div
+      [:select.to-select.mr-3 {:name "to"}
+       (for [[resource name] state/inv->name]
+         [:option {:value resource} name])]
+      (for [[resource name] state/inv->name
+            :let [price (prices resource 4)
+                  available (inv resource 0)]]
+        [:button.btn.btn-primary.mr-3
+         {:disabled (< available price)
+          :hx-post "inventory:buy"
+          :hx-vals {:from resource}
+          :hx-include ".to-select"}
+          (format "Buy with %s (%s)" name price)])]
+     ]))
 
 (defcomponent ^:endpoint inventory [req from resource to ^:long count command]
   (case command
@@ -40,4 +57,7 @@
                    game-name
                   (partial disp-inventory game-name)
                   [from to]))
+        "buy"
+        (do
+          (prn 'buy from to))
         (disp-inventory game-name color)))

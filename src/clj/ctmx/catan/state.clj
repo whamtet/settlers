@@ -271,7 +271,6 @@
 (defn send-inv! [game-name from resource to quantity]
   (swap! state update-in [game-name :inventory] send-inv from resource to quantity))
 
-(def no-port (zipmap terrains (repeat 4)))
 (def wildport (zipmap terrains (repeat 3)))
 (def port-order ["pasture" "hills" "forest" "fields" "mountains"])
 (def port #(hash-map (port-order %) 2))
@@ -300,4 +299,4 @@
 (defn trading-privileges [game-name player]
   (->> (nodes-for-player game-name player)
        (map ports)
-       (apply merge-with min no-port)))
+       (apply merge-with min {})))
