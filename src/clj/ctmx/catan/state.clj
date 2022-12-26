@@ -128,7 +128,7 @@
             [5 4] ["red" "settlement"]
             [5 5] ["orange" "settlement"]})
 
-(def edge-downgrade [v]
+(defn edge-downgrade [v]
   (case v
         ;; inner
         [1 3] [0 0]

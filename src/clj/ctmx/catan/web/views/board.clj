@@ -1,24 +1,11 @@
 (ns ctmx.catan.web.views.board
     (:require
-      [clojure.string :as string]
       [ctmx.catan.sse :as sse]
       [ctmx.catan.state :as state]
+      [ctmx.catan.svg :as svg :refer [vec+]]
+      [ctmx.catan.web.views.board.settlement :as settlement]
       [ctmx.catan.component :refer [defcomponent]]
       [ctmx.response :as response]))
-
-;<rect fill="black" width="300" height="300" />
-;<polygon
-;points="150 0, 300 86.6, 300 213.4, 150 300, 0 213.4, 0 86.6"
-;fill="white"
-;/>
-;<circle cx="150" cy="150" r="40" fill="black" />
-(defn- vec+ [[x1 y1] [x2 y2]]
-  [(+ x1 x2)
-   (+ y1 y2)])
-(defn- pstring [vs]
-  (string/join ", "
-               (for [[x y] vs]
-                 (str x " " y))))
 
 (def rot (Math/pow 3 0.5))
 (def p3 (/ Math/PI 3))
@@ -58,11 +45,12 @@
                        :hx-vals {:robber i}
                        :hx-trigger "dblclick"}]
     (list
-     [:polygon {:points (pstring points) :fill fill}]
+     [:polygon {:points (svg/pstring points) :fill fill}]
      [:circle (assoc robber-action :cx x :cy y :r 40 :fill "white")]
      (if (neg? output)
        [:image {:x (- x 20) :y (- y 20) :xlink:href"/robber.png" :width 60 :height 72}]
-       [:text (assoc robber-action :x (- x 10) :y (+ y 10) :fill "black" :font-size "2em") output]))))
+       [:text (assoc robber-action :x (- x 10) :y (+ y 10) :fill "black" :font-size "2em") output])
+     (settlement/city offset "black"))))
 
 (defn svg [& children]
   [:svg {:width 1300 :height 1220 :viewBox "0 0 1500 1500"
