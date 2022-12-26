@@ -9,6 +9,6 @@
                 (for [[x y] vs]
                   (str (+ x0 x) " " (+ y0 y))))))
 
-(defn vec+ [[x1 y1] [x2 y2]]
-  [(+ x1 x2)
-   (+ y1 y2)])
+(defn vec+ [& vs]
+  [(->> vs (map first) (apply +))
+   (->> vs (map second) (apply +))])

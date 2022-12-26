@@ -33,7 +33,7 @@
   [:pattern {:id id :x 0 :y 0 :width 1 :height 1}
    [:image {:xlink:href (str "/" id ".jpg")}]])
 
-(defn hex [i pattern output]
+(defn hex [game-name i pattern output]
   (let [[x y :as offset] (vec+
                           (rt->xy (i->r i) (i->t i))
                           [807 750])
@@ -43,14 +43,23 @@
         fill (format "url(#%s)" pattern)
         robber-action {:hx-post "board:robber"
                        :hx-vals {:robber i}
-                       :hx-trigger "dblclick"}]
+                       :hx-trigger "dblclick"}
+        nodes (state/get-nodes game-name i)
+        edges (state/get-edges game-name i)]
     (list
      [:polygon {:points (svg/pstring points) :fill fill}]
      [:circle (assoc robber-action :cx x :cy y :r 40 :fill "white")]
      (if (neg? output)
        [:image {:x (- x 20) :y (- y 20) :xlink:href"/robber.png" :width 60 :height 72}]
        [:text (assoc robber-action :x (- x 10) :y (+ y 10) :fill "black" :font-size "2em") output])
-     (settlement/city offset "black"))))
+     (map-indexed
+      (fn [i [color settlement]]
+        (let [t (+ p6 (* i p3))
+              offset (vec+ offset [-25 -25] (rt->xy 150 t))]
+          (case settlement
+                "settlement" (settlement/settlement offset color)
+                "city" (settlement/city offset color)
+                nil))) nodes))))
 
 (defn svg [& children]
   [:svg {:width 1300 :height 1220 :viewBox "0 0 1500 1500"
@@ -63,7 +72,7 @@
     [:div#board {:position "relative"}
      [:img {:src "/background.png"}]
      (svg
-      (map hex (range) terrains outputs))]))
+      (map hex (repeat game-name) (range) terrains outputs))]))
 
 (defcomponent ^:endpoint board [req command ^:long robber]
   (case command

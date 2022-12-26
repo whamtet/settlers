@@ -1,5 +1,7 @@
 (ns ctmx.catan.state)
 
+(defonce state (atom {}))
+
 (def colors ["red" "orange" "white" "blue"])
 (def valid-color? (set colors))
 
@@ -188,6 +190,15 @@
             [5 5] "red"
             [6 5] "orange"})
 
+(defn get-edges [game-name tile]
+  (let [m (get-in @state [game-name :edges])]
+    (for [i (range 6)]
+      (-> [tile i] edge-downgrade m))))
+(defn get-nodes [game-name tile]
+  (let [m (get-in @state [game-name :nodes])]
+    (for [i (range 6)]
+      (-> [tile i] node-downgrade m))))
+
 (defn new-game [random?]
   (let [outputs (if random? (shuffle outputs) outputs)
         terrains (if random? (shuffle terrains) terrains)]
@@ -197,8 +208,6 @@
      :robber (outputs->robber outputs)
      :nodes nodes
      :edges edges}))
-
-(defonce state (atom {}))
 
 (defn add-game [game-name random?]
   (swap! state assoc game-name (new-game random?)))
