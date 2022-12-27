@@ -400,7 +400,10 @@
                  "pasture" 1
                  "fields" 1}
    "city" {"mountains" 3
-           "fields" 2}})
+           "fields" 2}
+   "card" {"mountains" 1
+           "pasture" 1
+           "fields" 1}})
 (defn enough? [required available]
   (every?
    (fn [[resource count]]
@@ -482,13 +485,65 @@
       (get-in d [k player]))))
 
 (defn- pick-up [m player]
-  (let [[card & cards] (m :cards)]
-    (if card
+  (let [{:keys [cards inventory]} m
+        inventory (inventory player)
+        [card & cards] cards]
+    (if (and card (enough? (materials "card") inventory))
       (-> m
           (update-in [:hands player] conj card)
+          (update-in [:inventory player] #(merge-with - % (materials "card")))
           (assoc :cards cards))
       m)))
 (defn pick-up! [game-name player]
   (swap! state update game-name pick-up player))
 (defn get-cards [game-name player]
   (get-in @state [game-name :hands player]))
+
+(defn- dissoc-i [s i]
+  (concat
+   (take i s)
+   (drop (inc i) s)))
+
+(defn- remove-seq [s i]
+  (let [[pre [card & rest]] (split-at i s)]
+    [card (concat pre rest)]))
+(defn- play [m player i]
+  (if (:playing m)
+    m
+    (let [[card cards] (remove-seq (get-in m [:hands player]) i)]
+      (if card
+        (-> m
+            (assoc :playing (assoc card :player player))
+            (assoc-in [:hands player] cards))
+        m))))
+(defn play! [game-name player i]
+  (swap! state update game-name play player i))
+
+(defn get-card [game-name]
+  (get-in @state [game-name :playing]))
+
+(defn- retrieve [m player]
+  (if-let [card (:playing m)]
+    (-> m
+        (dissoc :playing)
+        (update-in [:hands player] conj (select-keys card [:title :body])))
+    m))
+(defn retrieve! [game-name player]
+  (swap! state update game-name retrieve player))
+
+(defonce __
+  (swap! state assoc-in ["asdf" :playing] {:title "Monopoly" :body "blaa blaa" :player "red"}))
+
+(defn- monopolize [{:keys [inventory] :as m} player resource]
+  (let [total (->> inventory
+                   vals
+                   (map #(% resource))
+                   (filter identity)
+                   (apply +))
+        inventory (-> (util/valmap #(assoc % resource 0) inventory)
+                      (assoc-in [player resource] total))]
+    (-> m
+        (dissoc :playing)
+        (assoc :inventory inventory))))
+(defn monopolize! [game-name player resource]
+  (swap! state update game-name monopolize player resource))
