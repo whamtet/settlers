@@ -35,6 +35,9 @@
    (send-retry game-name (render/html html) recipients)
    nil))
 
-(defn send-color! [game-name f colors]
-  (doseq [color colors]
-    (send! game-name (f color) #{color})))
+(defn send-color!
+  ([game-name f]
+   (send-color! game-name f state/valid-color?))
+  ([game-name f colors]
+    (doseq [color colors]
+      (send! game-name (f color) #{color}))))

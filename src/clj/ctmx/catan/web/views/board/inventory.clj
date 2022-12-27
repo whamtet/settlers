@@ -16,10 +16,22 @@
          :hx-include hx-include
          :hx-confirm (format "Send %s to %s?" name other-color)} "Send to " other-color])]))
 
+(defn- disp-thiever [game-name color]
+  [:div#thiever.mb-3
+   (for [[player count] (state/card-counts game-name)
+         :when (not= player color)]
+     [:button.btn.btn-primary.mr-3
+      {:hx-post "inventory:steal"
+       :hx-vals {:from player}
+       :hx-confirm (format "Steal from %s?" player)
+       :disabled (zero? count)}
+      (format "Steal from %s (%s)" player count)])])
+
 (defn disp-inventory [game-name color]
   (let [inv (state/get-inventory game-name color)
         prices (state/trading-privileges game-name color)]
     [:div#inventory
+     (disp-thiever game-name color)
      [:h2 "Inventory"]
      [:table.table
       [:tbody
@@ -50,9 +62,9 @@
      ]))
 
 (defn update-inventory [game-name]
-  (sse/send-color! game-name (partial disp-inventory game-name) state/valid-color?))
+  (sse/send-color! game-name (partial disp-inventory game-name)))
 
-(defcomponent ^:endpoint inventory [req from resource to ^:long count command]
+(defcomponent ^:endpoint inventory [req from resource to ^:long count command from]
   (case command
         "send" (do
                  (prn (java.util.Date.) 'send from resource to count)
@@ -65,4 +77,8 @@
         (when (and from (not= from to))
               (state/buy! game-name color from to)
               (disp-inventory game-name color))
+        "steal"
+        (do
+          (state/steal! game-name from color)
+          (update-inventory game-name))
         (disp-inventory game-name color)))

@@ -8,8 +8,7 @@
 (defn disp-dice [game-name]
   (let [dice (state/get-dice game-name)
         sum (apply + dice)]
-    (prn 'dice dice)
-    [:div#dice
+    [:div#dice.mb-3
      [:h3 "Dice"]
      (when (= 7 sum) [:h3 "Robber!"])
      [:button.btn.btn-primary.mr-3 {:hx-post "dice:roll"} "Roll!"]

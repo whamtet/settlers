@@ -332,6 +332,7 @@
               inventory
               data)
       inventory)))
+
 (defn- roll [m]
   (let [{:keys [nodes outputs terrains robber inventory]} m
         outputs (assoc outputs robber -1)
@@ -349,10 +350,26 @@
                        (group-by :resource)
                        (reduce allocate-resource inventory))]
     (assoc m :dice dice :inventory inventory)))
+
 (defn roll! [game-name]
   (swap! state update game-name roll))
 
 (defn get-dice [game-name]
   (get-in @state [game-name :dice]))
 
+(defn- steal [inventory from to]
+  (let [available (for [[resource quantity] (inventory from)
+                        _ (range quantity)] resource)]
+    (if (not-empty available)
+      (let [stolen (rand-nth available)]
+        (-> inventory
+            (update-in [from stolen] dec)
+            (update-in [to stolen] safe+ 1)))
+      inventory)))
+(defn steal! [game-name from to]
+  (swap! state update-in [game-name :inventory] steal from to))
 
+(defn card-counts [game-name]
+  (for [[player inventory] (get-in @state [game-name :inventory])
+        :when (not= "bank" player)]
+    [player (->> inventory vals (apply +))]))
