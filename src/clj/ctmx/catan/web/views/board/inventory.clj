@@ -29,12 +29,15 @@
 
 (defn disp-inventory [game-name color]
   (let [inv (state/get-inventory game-name color)
-        prices (state/trading-privileges game-name color)]
+        prices (state/trading-privileges game-name color)
+        cities (state/get-cities game-name color)
+        settlements (state/get-settlements game-name color)]
     [:div#inventory
      (disp-thiever game-name color)
      [:h2 "Inventory"]
      [:table.table
       [:tbody
+       [:tr [:td cities " cities " settlements " settlements available."]]
        (for [[resource name] state/inv->name
              :let [count (inv resource 0)]]
          [:tr

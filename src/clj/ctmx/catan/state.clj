@@ -398,16 +398,29 @@
    required))
 
 (defn- build-node [m player v]
-  (let [{:keys [nodes inventory]} m
+  (let [{:keys [nodes inventory cities settlements]} m
+        cities (cities player)
+        settlements (settlements player)
         inventory (inventory player)
         v (node-downgrade v)
         [_ existing] (nodes v)
         new (case existing
-                  nil (when (enough? (materials "settlement") inventory)
+                  nil (when (and
+                             (enough? (materials "settlement") inventory)
+                             (pos? settlements))
                             "settlement")
-                  "settlement" (when (enough? (materials "city") inventory)
+                  "settlement" (when (and
+                                      (enough? (materials "city") inventory)
+                                      (pos? cities))
                                      "city")
                   "city" nil)
+        [cities settlements]
+        (case [existing new]
+              [nil "settlement"] [cities (dec settlements)]
+              ["settlement" "city"] [(dec cities) (inc settlements)]
+              ["city" nil] [(inc cities) settlements]
+              ["settlement" nil] [cities (inc settlements)]
+              [cities settlements])
         inventory
         (case [existing new]
               [nil "settlement"] (merge-with - inventory (materials "settlement"))
@@ -417,6 +430,8 @@
               inventory)
         node (when new [player new])]
     (-> m
+        (assoc-in [:cities player] cities)
+        (assoc-in [:settlements player] settlements)
         (assoc-in [:inventory player] inventory)
         (assoc-in [:nodes v] node))))
 (defn build-node! [game-name player i j]
@@ -424,3 +439,8 @@
 
 (defn dump-state []
   (spit dump-file (pr-str @state)))
+
+(defn get-cities [game-name player]
+  (get-in @state [game-name :cities player]))
+(defn get-settlements [game-name player]
+  (get-in @state [game-name :settlements player]))
