@@ -246,6 +246,8 @@
      :settlements (zipmap colors (repeat 3))
      :roads (zipmap colors (repeat 13))
      :inventory inventory
+     :knights {}
+     :hands {}
      :dice [1 1]}))
 
 (defn add-game [game-name random?]
@@ -478,3 +480,15 @@
   (let [d (@state game-name)]
     (for [k [:cities :settlements :roads]]
       (get-in d [k player]))))
+
+(defn- pick-up [m player]
+  (let [[card & cards] (m :cards)]
+    (if card
+      (-> m
+          (update-in [:hands player] conj card)
+          (assoc :cards cards))
+      m)))
+(defn pick-up! [game-name player]
+  (swap! state update game-name pick-up player))
+(defn get-cards [game-name player]
+  (get-in @state [game-name :hands player]))

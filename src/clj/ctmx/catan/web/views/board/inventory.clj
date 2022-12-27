@@ -31,7 +31,7 @@
   (let [inv (state/get-inventory game-name color)
         prices (state/trading-privileges game-name color)
         [cities settlements roads] (state/get-infrastructure game-name color)]
-    [:div#inventory
+    [:div#inventory.mb-3
      (disp-thiever game-name color)
      [:h2 "Inventory"]
      [:table.table
@@ -80,7 +80,7 @@
         "buy"
         (when (and from (not= from to))
               (state/buy! game-name color from to)
-              (disp-inventory game-name color))
+              (update-inventory game-name))
         "steal"
         (do
           (state/steal! game-name from color)
