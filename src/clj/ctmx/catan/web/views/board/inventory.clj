@@ -21,7 +21,7 @@
         prices (state/trading-privileges game-name color)]
     [:div#inventory
      [:h2 "Inventory"]
-     [:table
+     [:table.table
       [:tbody
        (for [[resource name] state/inv->name
              :let [count (inv resource 0)]]

@@ -235,7 +235,7 @@
      :cities (zipmap colors (repeat 4))
      :settlements (zipmap colors (repeat 3))
      :inventory inventory
-     :dice [0 0]}))
+     :dice [1 1]}))
 
 (defn add-game [game-name random?]
   (swap! state assoc game-name (new-game random?)))
@@ -335,7 +335,7 @@
 (defn- roll [m]
   (let [{:keys [nodes outputs terrains robber inventory]} m
         outputs (assoc outputs robber -1)
-        dice [(rand-int 6) (rand-int 6)]
+        dice [(inc (rand-int 6)) (inc (rand-int 6))]
         sum (apply + dice)
         yield (for [[i output terrain] (map list (range) outputs terrains)
                     :when (= output sum)
