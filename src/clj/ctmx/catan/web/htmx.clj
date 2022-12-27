@@ -19,6 +19,7 @@
   (page
    [:head
     [:meta {:charset "UTF-8"}]
+    [:meta {:name "viewport" :content "width=device-width, initial-scale=1, shrink-to-fit=no"}]
     [:title "Htmx + Kit"]
     [:link {:rel "stylesheet"
             :href "https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"

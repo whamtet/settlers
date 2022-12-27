@@ -60,7 +60,7 @@
 (defn outputs->robber [outputs]
   (count (take-while pos? outputs)))
 
-(defn node-downgrade [v]
+(defn node-downgrade* [v]
   (case v
         ;; inner ring
         ;; forward
@@ -130,18 +130,20 @@
         [16 3] [15 5]
         [17 3] [16 5]
         [18 4] [17 0]
-        v))
+        nil))
+(defn node-downgrade [v]
+  (or (node-downgrade* v) v))
 
 (def nodes {[1 0] ["white" "settlement"]
             [2 0] ["blue" "settlement"]
-            [3 0] ["orange" "settlement"]
+            [2 2] ["orange" "settlement"]
             [3 2] ["blue" "settlement"]
             [4 2] ["red" "settlement"]
             [4 4] ["white" "settlement"]
             [5 4] ["red" "settlement"]
             [6 5] ["orange" "settlement"]})
 
-(defn edge-downgrade [v]
+(defn edge-downgrade* [v]
   (case v
         ;; inner
         [1 3] [0 0]
@@ -190,7 +192,9 @@
         [16 3] [15 0]
         [17 3] [16 0]
         [18 4] [17 1]
-        v))
+        nil))
+(defn edge-downgrade [v]
+  (or (edge-downgrade* v) v))
 
 (def edges {[1 0] "white"
             [2 0] "blue"
@@ -204,11 +208,15 @@
 (defn get-edges [game-name tile]
   (let [m (get-in @state [game-name :edges])]
     (for [i (range 6)]
-      (m [tile i]))))
+      (if (edge-downgrade* [tile i])
+        :skip
+        (m [tile i])))))
 (defn get-nodes [game-name tile]
   (let [m (get-in @state [game-name :nodes])]
     (for [i (range 6)]
-      (m [tile i]))))
+      (if (node-downgrade* [tile i])
+        [:skip]
+        (m [tile i])))))
 (defn nodes-for-player [game-name player]
   (for [[node [color]] (get-in @state [game-name :nodes])
         :when (= player color)]
@@ -397,6 +405,32 @@
      (>= (available resource 0) count))
    required))
 
+(defn- build-edge [m player v]
+  (let [{:keys [edges inventory roads]} m
+        roads (roads player)
+        inventory (inventory player)
+        v (edge-downgrade v)
+        existing (edges v)
+        new (and
+             (not existing)
+             (enough? (materials "road") inventory)
+             (pos? roads))
+        roads (cond
+               new (dec roads)
+               existing (inc roads)
+               :else roads)
+        inventory (cond
+                   new (merge-with safe+ inventory (materials "road"))
+                   existing (merge-with - inventory (materials "road"))
+                   :else inventory)
+        edge (when new player)]
+    (-> m
+        (assoc-in [:roads player] roads)
+        (assoc-in [:inventory player] inventory)
+        (assoc-in [:edges v] edge))))
+(defn build-edge! [game-name player i j]
+  (swap! state update game-name build-edge player [i j]))
+
 (defn- build-node [m player v]
   (let [{:keys [nodes inventory cities settlements]} m
         cities (cities player)
@@ -440,7 +474,7 @@
 (defn dump-state []
   (spit dump-file (pr-str @state)))
 
-(defn get-cities [game-name player]
-  (get-in @state [game-name :cities player]))
-(defn get-settlements [game-name player]
-  (get-in @state [game-name :settlements player]))
+(defn get-infrastructure [game-name player]
+  (let [d (@state game-name)]
+    (for [k [:cities :settlements :roads]]
+      (get-in d [k player]))))

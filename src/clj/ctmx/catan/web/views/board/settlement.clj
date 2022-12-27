@@ -23,15 +23,16 @@
                 100 100
                 0 100]))
 
-(defn settlement [i j offset color]
+(defn settlement [player i j offset color]
   [:polygon {:points (svg/pstring offset (scale 0.5 house))
              :stroke "black"
-             :hx-post "board:node"
+             :hx-post (when (= player color) "board:node")
              :hx-vals {:i i :j j}
              :fill color}])
 
-(defn city [i j offset color]
-  [:g {:hx-post "board:node" :hx-vals {:i i :j j}}
+(defn city [player i j offset color]
+  [:g {:hx-post (when (= player color) "board:node")
+       :hx-vals {:i i :j j}}
    [:polygon {:points (svg/pstring offset (scale+ 0.4 -20 house))
               :stroke "black"
               :fill color}]
@@ -39,7 +40,7 @@
               :stroke "black"
               :fill color}]])
 
-(defn blank [i j offset color]
+(defn blank [player i j offset color]
   [:polygon {:points (svg/pstring offset (scale 0.5 blank-shape))
              :hx-post "board:node"
              :hx-vals {:i i :j j}
