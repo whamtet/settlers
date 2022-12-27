@@ -1,7 +1,9 @@
 (ns ctmx.catan.state
     (:require
       [ctmx.catan.env :as env]
-      [ctmx.catan.util :as util]))
+      [ctmx.catan.util :as util])
+    (:import
+      java.io.File))
 
 (defonce state (atom {}))
 
@@ -213,7 +215,7 @@
     node))
 
 (def inventory
-  {"red" {"fields" 1}
+  {"red" {"fields" 10 "forest" 10 "mountains" 10 "hills" 10 "pasture" 10}
    "white" {"fields" 1}
    "blue" {"forest" 1}
    "orange" {"mountains" 1}
@@ -240,7 +242,12 @@
 
 (defn add-game [game-name random?]
   (swap! state assoc game-name (new-game random?)))
-(defonce _ (when true #_env/dev? (add-game "asdf" false)))
+
+(def dump-file (File. "dump.edn"))
+(defonce _
+  (if (.exists dump-file)
+    (->> dump-file slurp read-string (reset! state))
+    (add-game "asdf" false)))
 
 (defn delete-game [game-name]
   (swap! state dissoc game-name))
@@ -414,3 +421,6 @@
         (assoc-in [:nodes v] node))))
 (defn build-node! [game-name player i j]
   (swap! state update game-name build-node player [i j]))
+
+(defn dump-state []
+  (spit dump-file (pr-str @state)))

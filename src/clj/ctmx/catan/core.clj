@@ -4,14 +4,15 @@
     [integrant.core :as ig]
     [ctmx.catan.config :as config]
     [ctmx.catan.env :refer [defaults]]
+    [ctmx.catan.state :as state]
 
-    ;; Edges       
+    ;; Edges
     [kit.edge.server.undertow]
     [ctmx.catan.web.handler]
 
     ;; Routes
     [ctmx.catan.web.routes.api]
-    
+
     [ctmx.catan.web.routes.ui])
   (:gen-class))
 
@@ -26,6 +27,7 @@
 (defonce system (atom nil))
 
 (defn stop-app []
+  (state/dump-state)
   ((or (:stop defaults) (fn [])))
   (some-> (deref system) (ig/halt!))
   (shutdown-agents))
