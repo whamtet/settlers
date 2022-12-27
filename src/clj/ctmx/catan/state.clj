@@ -234,7 +234,8 @@
      :edges edges
      :cities (zipmap colors (repeat 4))
      :settlements (zipmap colors (repeat 3))
-     :inventory inventory}))
+     :inventory inventory
+     :dice [0 0]}))
 
 (defn add-game [game-name random?]
   (swap! state assoc game-name (new-game random?)))
@@ -300,3 +301,23 @@
   (->> (nodes-for-player game-name player)
        (map ports)
        (apply merge-with min {})))
+
+(defn- buy [m player from to]
+  (let [{:keys [nodes inventory]} m
+        inventory (inventory player)
+        nodes-for-player (for [[node [color]] nodes :when (= color player)] node)
+        prices (->> nodes-for-player
+                    (map ports)
+                    (apply merge-with min {}))
+        price (prices from 4)
+        available (inventory from 0)
+        inventory (if (>= available price)
+                    (-> inventory
+                        (update from - price)
+                        (update to safe+ 1))
+                    inventory)]
+    (assoc-in m [:inventory player] inventory)))
+(defn buy! [game-name player from to]
+  (swap! state update game-name buy player from to))
+
+

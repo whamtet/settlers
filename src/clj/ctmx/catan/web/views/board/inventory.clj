@@ -32,7 +32,7 @@
            (when (pos? count)
                  (send-form color resource name count))]])]]
      [:hr]
-     [:h3 "Buy"]
+     [:h4 "Buy from abroad"]
      [:div
       [:select.to-select.mr-3 {:name "to"}
        (for [[resource name] state/inv->name]
@@ -44,7 +44,8 @@
          {:disabled (< available price)
           :hx-post "inventory:buy"
           :hx-vals {:from resource}
-          :hx-include ".to-select"}
+          :hx-include ".to-select"
+          :hx-target "#inventory"}
           (format "Buy with %s (%s)" name price)])]
      ]))
 
@@ -58,6 +59,7 @@
                   (partial disp-inventory game-name)
                   [from to]))
         "buy"
-        (do
-          (prn 'buy from to))
+        (when (and from (not= from to))
+              (state/buy! game-name color from to)
+              (disp-inventory game-name color))
         (disp-inventory game-name color)))
