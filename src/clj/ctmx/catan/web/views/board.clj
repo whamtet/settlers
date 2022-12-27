@@ -3,6 +3,7 @@
       [ctmx.catan.sse :as sse]
       [ctmx.catan.state :as state]
       [ctmx.catan.svg :as svg :refer [vec+]]
+      [ctmx.catan.web.views.board.inventory :as inventory]
       [ctmx.catan.web.views.board.settlement :as settlement]
       [ctmx.catan.component :refer [defcomponent]]
       [ctmx.response :as response]))
@@ -73,13 +74,14 @@
     (list
      (map-indexed (partial road offset) edges)
      (map-indexed
-      (fn [i [color settlement]]
-        (let [t (+ p6 (* i p3))
-              offset (vec+ offset [-25 -25] (rt->xy 150 t))]
-          (case settlement
-                "settlement" (settlement/settlement offset color)
-                "city" (settlement/city offset color)
-                nil))) nodes))))
+      (fn [j [color settlement]]
+        (let [t (+ p6 (* j p3))
+              offset (vec+ offset [-25 -25] (rt->xy 150 t))
+              f (case settlement
+                      "settlement" settlement/settlement
+                      "city" settlement/city
+                      settlement/blank)]
+          (f i j offset color))) nodes))))
 
 (defn svg [& children]
   [:svg {:width 1300 :height 1220 :viewBox "0 0 1500 1500"
@@ -95,11 +97,15 @@
       (map hex (repeat game-name) (range) terrains outputs)
       (for [i (range 19)] (infrastructure game-name i)))]))
 
-(defcomponent ^:endpoint board [req command ^:long robber]
+(defcomponent ^:endpoint board [req command ^:long robber ^:long i ^:long j]
   (case command
         "robber"
         (do
           (assert robber)
           (state/assoc-robber game-name robber)
           (sse/send! game-name (board-disp game-name)))
+        "node" (do
+                 (state/build-node! game-name color i j)
+                 (sse/send! game-name (board-disp game-name))
+                 (inventory/update-inventory game-name))
         (board-disp game-name)))

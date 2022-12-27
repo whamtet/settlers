@@ -234,6 +234,7 @@
      :edges edges
      :cities (zipmap colors (repeat 4))
      :settlements (zipmap colors (repeat 3))
+     :roads (zipmap colors (repeat 13))
      :inventory inventory
      :dice [1 1]}))
 
@@ -373,3 +374,43 @@
   (for [[player inventory] (get-in @state [game-name :inventory])
         :when (not= "bank" player)]
     [player (->> inventory vals (apply +))]))
+
+(def materials
+  {"road" {"hills" 1
+           "forest" 1}
+   "settlement" {"hills" 1
+                 "forest" 1
+                 "pasture" 1
+                 "fields" 1}
+   "city" {"mountains" 3
+           "fields" 2}})
+(defn enough? [required available]
+  (every?
+   (fn [[resource count]]
+     (>= (available resource 0) count))
+   required))
+
+(defn- build-node [m player v]
+  (let [{:keys [nodes inventory]} m
+        inventory (inventory player)
+        v (node-downgrade v)
+        [_ existing] (nodes v)
+        new (case existing
+                  nil (when (enough? (materials "settlement") inventory)
+                            "settlement")
+                  "settlement" (when (enough? (materials "city") inventory)
+                                     "city")
+                  "city" nil)
+        inventory
+        (case [existing new]
+              [nil "settlement"] (merge-with - inventory (materials "settlement"))
+              ["settlement" "city"] (merge-with - inventory (materials "city"))
+              ["city" nil] (merge-with safe+ inventory (materials "settlement") (materials "city"))
+              ["settlement" nil] (merge-with safe+ inventory (materials "settlement"))
+              inventory)
+        node (when new [player new])]
+    (-> m
+        (assoc-in [:inventory player] inventory)
+        (assoc-in [:nodes v] node))))
+(defn build-node! [game-name player i j]
+  (swap! state update game-name build-node player [i j]))

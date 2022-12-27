@@ -11,7 +11,7 @@
     [:div#dice.mb-3
      [:h3 "Dice"]
      (when (= 7 sum) [:h3 "Robber!"])
-     [:button.btn.btn-primary.mr-3 {:hx-post "dice:roll"} "Roll!"]
+     [:button.btn.btn-primary.mr-3 {:hx-post "dice:roll" :hx-confirm "Roll?"} "Roll!"]
      (for [die dice]
        [:img {:src (format "/d%s.jpg" die) :style {:width "50px"}}])]))
 

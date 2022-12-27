@@ -17,17 +17,30 @@
                 20 100
                 20 50
                 0 50]))
+(def blank-shape
+  (partition 2 [0 0
+                100 0
+                100 100
+                0 100]))
 
-(defn settlement [offset color]
+(defn settlement [i j offset color]
   [:polygon {:points (svg/pstring offset (scale 0.5 house))
              :stroke "black"
+             :hx-post "board:node"
+             :hx-vals {:i i :j j}
              :fill color}])
 
-(defn city [offset color]
-  (list
+(defn city [i j offset color]
+  [:g {:hx-post "board:node" :hx-vals {:i i :j j}}
    [:polygon {:points (svg/pstring offset (scale+ 0.4 -20 house))
               :stroke "black"
               :fill color}]
    [:polygon {:points (svg/pstring offset (scale+ 0.4 20 house))
               :stroke "black"
-              :fill color}]))
+              :fill color}]])
+
+(defn blank [i j offset color]
+  [:polygon {:points (svg/pstring offset (scale 0.5 blank-shape))
+             :hx-post "board:node"
+             :hx-vals {:i i :j j}
+             :fill "rgba(0, 0, 0, 0)"}])
