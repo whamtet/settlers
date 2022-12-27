@@ -2,6 +2,7 @@
     (:require
       [ctmx.catan.state :as state]
       [ctmx.catan.component :refer [defcomponent]]
+      [ctmx.catan.web.views.board.dice :as dice]
       [ctmx.catan.web.views.board :as board]
       [ctmx.catan.web.views.board.inventory :as inventory]
       [ctmx.response :as response]))
@@ -27,4 +28,5 @@
          [:h5 "Welcome " [:span {:style {:color color}} color] " player."]
          menu-bar
          (board/board req)
+         (dice/dice req)
          (inventory/inventory req)]))

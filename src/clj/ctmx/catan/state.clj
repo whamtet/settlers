@@ -239,7 +239,7 @@
 
 (defn add-game [game-name random?]
   (swap! state assoc game-name (new-game random?)))
-(defonce _ (when env/dev? (add-game "asdf" false)))
+(defonce _ (when true #_env/dev? (add-game "asdf" false)))
 
 (defn delete-game [game-name]
   (swap! state dissoc game-name))
@@ -319,5 +319,40 @@
     (assoc-in m [:inventory player] inventory)))
 (defn buy! [game-name player from to]
   (swap! state update game-name buy player from to))
+
+(defn- allocate-resource [inventory [resource data]]
+  (let [available (get-in inventory ["bank" resource])
+        required (->> data (map :quantity) (apply +))
+        num-required (->> data (map :player) distinct count)]
+    (if (or (>= available required) (= 1 num-required))
+      (reduce (fn [inventory {:keys [player quantity]}]
+                (-> inventory
+                    (update-in ["bank" resource] - quantity)
+                    (update-in [player resource] safe+ quantity)))
+              inventory
+              data)
+      inventory)))
+(defn- roll [m]
+  (let [{:keys [nodes outputs terrains robber inventory]} m
+        outputs (assoc outputs robber -1)
+        dice [(rand-int 6) (rand-int 6)]
+        sum (apply + dice)
+        yield (for [[i output terrain] (map list (range) outputs terrains)
+                    :when (= output sum)
+                    j (range 6)
+                    :let [[color settlement] (-> [i j] node-downgrade nodes)]
+                    :when settlement]
+                {:player color
+                 :resource terrain
+                 :quantity (if (= "city" settlement) 2 1)})
+        inventory (->> yield
+                       (group-by :resource)
+                       (reduce allocate-resource inventory))]
+    (assoc m :dice dice :inventory inventory)))
+(defn roll! [game-name]
+  (swap! state update game-name roll))
+
+(defn get-dice [game-name]
+  (get-in @state [game-name :dice]))
 
 

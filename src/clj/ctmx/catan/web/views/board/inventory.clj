@@ -49,6 +49,9 @@
           (format "Buy with %s (%s)" name price)])]
      ]))
 
+(defn update-inventory [game-name]
+  (sse/send-color! game-name (partial disp-inventory game-name) state/valid-color?))
+
 (defcomponent ^:endpoint inventory [req from resource to ^:long count command]
   (case command
         "send" (do
