@@ -8,17 +8,14 @@
 (defn- send-form [color resource name count]
   (let [input-class (str "mr-3 count" resource)
         hx-include (str ".count" resource)]
-    [:div
+    (list
      [:input {:type "number" :name "count" :value 1 :min 1 :max count :class input-class}]
      (for [other-color (-> state/valid-color? (disj color) seq (conj "bank"))]
        [:button.btn.btn-primary.mr-3
         {:hx-post "inventory:send"
          :hx-vals {:from color :resource resource :to other-color}
          :hx-include hx-include
-         :hx-confirm (format "Send %s to %s?" name other-color)} "Send to " other-color])
-     [:button.btn.btn-primary.ml-3
-      {:hx-post "inventory:pick-up"
-       :hx-vals {:resource resource}} "Pick up"]]))
+         :hx-confirm (format "Send %s to %s?" name other-color)} "Send to " other-color]))))
 
 (defn- small-inventory [resource-str infra-str]
   [:div.p-1 {:style {:position "absolute" :top "90px"}}
@@ -50,7 +47,10 @@
           [:td (inv resource 0)]
           [:td
            (when (pos? count)
-                 (send-form color resource name count))]])]]
+                 (send-form color resource name count))
+           [:button.btn.btn-primary.ml-3
+            {:hx-post "inventory:pick-up"
+             :hx-vals {:resource resource}} "Pick up"]]])]]
      [:hr]
      [:h4 "Buy from abroad"]
      [:div
@@ -66,8 +66,7 @@
           :hx-vals {:from resource}
           :hx-include ".to-select"
           :hx-target "#inventory"}
-          (format "Buy with %s (%s)" name price)])]
-     ]))
+          (format "Buy with %s (%s)" name price)])]]))
 
 (defn update-inventory
   ([game-name] (update-inventory game-name nil))

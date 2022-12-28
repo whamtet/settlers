@@ -222,8 +222,26 @@
         :when (= player color)]
     node))
 
+(def materials
+  {"road" {"hills" 1
+           "forest" 1}
+   "settlement" {"hills" 1
+                 "forest" 1
+                 "pasture" 1
+                 "fields" 1}
+   "city" {"mountains" 3
+           "fields" 2}
+   "card" {"mountains" 1
+           "pasture" 1
+           "fields" 1}})
+
+(def materials-start
+  (->> ["road" "road" "settlement" "settlement"]
+       (map materials)
+       (apply merge-with +)))
+
 (def inventory
-  {"red" {"fields" 10 "forest" 10 "mountains" 10 "hills" 10 "pasture" 10}
+  {"red" {"fields" 1}
    "white" {"fields" 1}
    "blue" {"forest" 1}
    "orange" {"mountains" 1}
@@ -240,12 +258,19 @@
      :outputs (vec outputs)
      :terrains (vec (outputs->terrains outputs terrains))
      :robber (outputs->robber outputs)
-     :nodes nodes
-     :edges edges
+     :nodes (if random? {} nodes)
+     :edges (if random? {} edges)
      :cities (zipmap colors (repeat 4))
      :settlements (zipmap colors (repeat 3))
      :roads (zipmap colors (repeat 13))
-     :inventory inventory
+     :inventory (if random?
+                  (reduce
+                   (fn [inv color]
+                     (-> inv
+                         (update "bank" #(merge-with - % materials-start))
+                         (update color #(merge-with + % materials-start))))
+                   inventory
+                   colors) inventory)
      :knights {}
      :hands {}
      :dice [1 1]}))
@@ -257,7 +282,7 @@
 (defonce _
   (if (.exists dump-file)
     (->> dump-file slurp read-string (reset! state))
-    (add-game "asdf" false)))
+    (add-game "asdf" true)))
 
 (defn delete-game [game-name]
   (swap! state dissoc game-name))
@@ -380,18 +405,6 @@
         :when (not= "bank" player)]
     [player (->> inventory vals (apply +))]))
 
-(def materials
-  {"road" {"hills" 1
-           "forest" 1}
-   "settlement" {"hills" 1
-                 "forest" 1
-                 "pasture" 1
-                 "fields" 1}
-   "city" {"mountains" 3
-           "fields" 2}
-   "card" {"mountains" 1
-           "pasture" 1
-           "fields" 1}})
 (defn enough? [required available]
   (every?
    (fn [[resource count]]
