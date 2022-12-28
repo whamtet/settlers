@@ -60,79 +60,77 @@
 (defn outputs->robber [outputs]
   (count (take-while pos? outputs)))
 
-(defn node-downgrade* [v]
-  (case v
-        ;; inner ring
-        ;; forward
-        [1 2] [0 0]
-        [2 3] [0 1]
-        [3 4] [0 2]
-        [4 5] [0 3]
-        [5 0] [0 4]
-        [6 1] [0 5]
-        ;; middle
-        [1 3] [0 5]
-        [2 4] [0 0]
-        [3 5] [0 1]
-        [4 6] [0 2]
-        [5 7] [0 3]
-        [6 8] [0 4]
-        ;; trailing
-        [2 5] [1 1]
-        [3 0] [2 2]
-        [4 1] [3 3]
-        [5 2] [4 4]
-        [6 3] [5 5]
+(def node-downgrade*
+  {
+  ;; inner ring
+  ;; forward
+    [1 2] [0 0]
+    [2 3] [0 1]
+    [3 4] [0 2]
+    [4 5] [0 3]
+    [5 0] [0 4]
+    [6 1] [0 5]
+    ;; middle
+    [1 3] [0 5]
+    [2 4] [0 0]
+    [3 5] [0 1]
+    [4 6] [0 2]
+    [5 7] [0 3]
+    [6 8] [0 4]
+    ;; trailing
+    [2 5] [1 1]
+    [3 0] [2 2]
+    [4 1] [3 3]
+    [5 2] [4 4]
+    [6 3] [5 5]
 
-        ;; outer ring
-        ;; forward (not all)
-        [8 2] [2 0]
-        [10 3] [3 1]
-        [12 4] [4 2]
-        [14 5] [5 3]
-        [16 0] [6 4]
-        [18 1] [1 5]
-        ;; middle1
-        [7 2] [1 0]
-        [8 3] [1 1]
-        [9 3] [2 1]
-        [10 4] [2 2]
-        [11 4] [3 2]
-        [12 5] [3 3]
-        [13 5] [4 3]
-        [14 0] [4 4]
-        [15 0] [5 4]
-        [16 1] [5 5]
-        [17 1] [6 5]
-        [18 2] [6 0]
-        ;; middle2
-        [7 3] [1 5]
-        [8 4] [1 0]
-        [9 4] [2 0]
-        [10 5] [2 1]
-        [11 5] [3 1]
-        [12 0] [3 2]
-        [13 0] [4 2]
-        [14 1] [4 3]
-        [15 1] [5 3]
-        [16 2] [5 4]
-        [17 2] [6 4]
-        [18 3] [6 5]
-        ;; trailing
-        [8 5] [7 1]
-        [9 5] [8 1]
-        [10 0] [9 2]
-        [11 0] [10 2]
-        [12 1] [11 3]
-        [13 1] [12 3]
-        [14 2] [13 4]
-        [15 2] [14 4]
-        [16 3] [15 5]
-        [17 3] [16 5]
-        [18 4] [17 0]
-        nil))
-(defn node-downgrade [v]
-  (or (node-downgrade* v) v))
+    ;; outer ring
+    ;; forward (not all)
+    [8 2] [2 0]
+    [10 3] [3 1]
+    [12 4] [4 2]
+    [14 5] [5 3]
+    [16 0] [6 4]
+    [18 1] [1 5]
+    ;; middle1
+    [7 2] [1 0]
+    [8 3] [1 1]
+    [9 3] [2 1]
+    [10 4] [2 2]
+    [11 4] [3 2]
+    [12 5] [3 3]
+    [13 5] [4 3]
+    [14 0] [4 4]
+    [15 0] [5 4]
+    [16 1] [5 5]
+    [17 1] [6 5]
+    [18 2] [6 0]
+    ;; middle2
+    [7 3] [1 5]
+    [8 4] [1 0]
+    [9 4] [2 0]
+    [10 5] [2 1]
+    [11 5] [3 1]
+    [12 0] [3 2]
+    [13 0] [4 2]
+    [14 1] [4 3]
+    [15 1] [5 3]
+    [16 2] [5 4]
+    [17 2] [6 4]
+    [18 3] [6 5]
+    ;; trailing
+    [8 5] [7 1]
+    [9 5] [8 1]
+    [10 0] [9 2]
+    [11 0] [10 2]
+    [12 1] [11 3]
+    [13 1] [12 3]
+    [14 2] [13 4]
+    [15 2] [14 4]
+    [16 3] [15 5]
+    [17 3] [16 5]
+    [18 4] [17 0]})
+(def node-downgrade #(node-downgrade* % %))
 
 (def nodes {[1 0] ["white" "settlement"]
             [2 0] ["blue" "settlement"]
@@ -143,58 +141,57 @@
             [5 4] ["red" "settlement"]
             [6 5] ["orange" "settlement"]})
 
-(defn edge-downgrade* [v]
-  (case v
-        ;; inner
-        [1 3] [0 0]
-        [2 4] [0 1]
-        [3 5] [0 2]
-        [4 0] [0 3]
-        [5 1] [0 4]
-        [6 2] [0 5]
-        ;; trailing
-        [2 5] [1 2]
-        [3 0] [2 3]
-        [4 1] [3 4]
-        [5 2] [4 5]
-        [6 3] [5 0]
+(def edge-downgrade*
+  {
+  ;; inner
+    [1 3] [0 0]
+    [2 4] [0 1]
+    [3 5] [0 2]
+    [4 0] [0 3]
+    [5 1] [0 4]
+    [6 2] [0 5]
+    ;; trailing
+    [2 5] [1 2]
+    [3 0] [2 3]
+    [4 1] [3 4]
+    [5 2] [4 5]
+    [6 3] [5 0]
 
-        ;; outer ring
-        ;; forward (not all)
-        [8 3] [2 0]
-        [10 4] [3 1]
-        [12 5] [4 2]
-        [14 0] [5 3]
-        [16 1] [6 4]
-        [18 2] [1 5]
-        ;; middle
-        [7 3] [1 0]
-        [8 4] [1 1]
-        [9 4] [2 1]
-        [10 5] [2 2]
-        [11 5] [3 2]
-        [12 0] [3 3]
-        [13 0] [4 3]
-        [14 1] [4 4]
-        [15 1] [5 4]
-        [16 2] [5 5]
-        [17 2] [6 5]
-        [18 3] [6 0]
-        ;; trailing
-        [8 5] [7 2]
-        [9 5] [8 2]
-        [10 0] [9 3]
-        [11 0] [10 3]
-        [12 1] [11 4]
-        [13 1] [12 4]
-        [14 2] [13 5]
-        [15 2] [14 5]
-        [16 3] [15 0]
-        [17 3] [16 0]
-        [18 4] [17 1]
-        nil))
-(defn edge-downgrade [v]
-  (or (edge-downgrade* v) v))
+    ;; outer ring
+    ;; forward (not all)
+    [8 3] [2 0]
+    [10 4] [3 1]
+    [12 5] [4 2]
+    [14 0] [5 3]
+    [16 1] [6 4]
+    [18 2] [1 5]
+    ;; middle
+    [7 3] [1 0]
+    [8 4] [1 1]
+    [9 4] [2 1]
+    [10 5] [2 2]
+    [11 5] [3 2]
+    [12 0] [3 3]
+    [13 0] [4 3]
+    [14 1] [4 4]
+    [15 1] [5 4]
+    [16 2] [5 5]
+    [17 2] [6 5]
+    [18 3] [6 0]
+    ;; trailing
+    [8 5] [7 2]
+    [9 5] [8 2]
+    [10 0] [9 3]
+    [11 0] [10 3]
+    [12 1] [11 4]
+    [13 1] [12 4]
+    [14 2] [13 5]
+    [15 2] [14 5]
+    [16 3] [15 0]
+    [17 3] [16 0]
+    [18 4] [17 1]})
+(def edge-upgrade* (util/invert edge-downgrade*))
+(def edge-downgrade #(edge-downgrade* % %))
 
 (def edges {[1 0] "white"
             [2 0] "blue"
@@ -321,24 +318,24 @@
 
 (def ports
   (util/keymap node-downgrade
-          {[7 0] wildport
-           [7 5] wildport
-           [8 0] (port 0)
-           [8 1] (port 0)
-           [10 0] wildport
-           [10 1] wildport
-           [11 1] wildport
-           [11 2] wildport
-           [12 2] (port 1)
-           [12 3] (port 1)
-           [14 2] (port 2)
-           [14 3] (port 2)
-           [15 3] wildport
-           [15 4] wildport
-           [16 4] (port 3)
-           [16 5] (port 3)
-           [18 4] (port 4)
-           [18 5] (port 4)}))
+               {[7 0] wildport
+                [7 5] wildport
+                [8 0] (port 0)
+                [8 1] (port 0)
+                [10 0] wildport
+                [10 1] wildport
+                [11 1] wildport
+                [11 2] wildport
+                [12 2] (port 1)
+                [12 3] (port 1)
+                [14 2] (port 2)
+                [14 3] (port 2)
+                [15 3] wildport
+                [15 4] wildport
+                [16 4] (port 3)
+                [16 5] (port 3)
+                [18 4] (port 4)
+                [18 5] (port 4)}))
 
 (defn trading-privileges [game-name player]
   (->> (nodes-for-player game-name player)
@@ -591,18 +588,37 @@
 (defn steal-board! [game-name from to]
   (swap! state update game-name steal from to false))
 
-(def decn #(mod (dec %) 6))
-(def graph-data
-  (for [i (range 19) j (range 6)
-        :let [edge [i j]]
-        :when (not (edge-downgrade* edge))]
-    [edge
-     (node-downgrade (update edge 1 decn))
-     (node-downgrade edge)]))
-
-(def n1->e (util/group-by-map second first graph-data))
-(def n2->e (util/group-by-map peek first graph-data))
+(defn dec-edge [v]
+  (edge-downgrade (update v 1 #(mod (dec %) 6))))
+(defn inc-edge [v]
+  (edge-downgrade (update v 1 #(mod (inc %) 6))))
 (def e->e
   (into {}
-        (for [[e n1 n2] graph-data]
-          [e (-> (concat (n1->e n1) (n2->e n2)) set (disj e))])))
+        (for [i (range 19) j (range 6)
+              :let [edge [i j]]
+              :when (not (edge-downgrade* edge))]
+          [edge
+           (concat
+            [(dec-edge edge) (inc-edge edge)]
+            (when-let [edge (edge-upgrade* edge)]
+              [(dec-edge edge) (inc-edge edge)]))])))
+
+(defn- road-length
+  ([edges]
+   (some->>
+    (for [[edge color] edges]
+      [color (road-length edges edge color #{})])
+    not-empty
+    (util/max-by second)))
+  ([edges edge color done]
+   (prn edge done)
+   (or
+    (some->> edge
+             e->e
+             (filter #(-> % edges (= color)))
+             (remove done)
+             not-empty
+             (map #(road-length edges % color (conj done edge)))
+             (apply max)
+             inc)
+    1)))
