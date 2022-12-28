@@ -1,5 +1,7 @@
 # catan
 
+Settlers of catan implementation using [ctmx](https://whamtet.github.io/ctmx/).
+
 Start a [REPL](#repls) in your editor or terminal of choice.
 
 Start the server with:
@@ -35,3 +37,12 @@ Note that this alias runs nREPL during development. To run nREPL in production (
 Run `clj -M:dev:nrepl` or `make repl`.
 
 Note that, just like with [CIDER](#cider), this alias runs nREPL during development. To run nREPL in production (typically when the system starts), use the kit-nrepl library through the +nrepl profile as described in [the documentation](https://kit-clj.github.io/docs/profiles.html#profiles).
+
+## Deployment
+
+```
+    make uberjar
+    java -jar target/catan-standalone.jar
+```
+
+Server runs on port 3000 by default, use nginx or another reverse proxy to offload SSL.

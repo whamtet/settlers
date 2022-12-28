@@ -373,27 +373,6 @@
               data)
       inventory)))
 
-(defn- roll [m]
-  (let [{:keys [nodes outputs terrains robber inventory]} m
-        outputs (assoc outputs robber -1)
-        dice [(inc (rand-int 6)) (inc (rand-int 6))]
-        sum (apply + dice)
-        yield (for [[i output terrain] (map list (range) outputs terrains)
-                    :when (= output sum)
-                    j (range 6)
-                    :let [[color settlement] (-> [i j] node-downgrade nodes)]
-                    :when settlement]
-                {:player color
-                 :resource terrain
-                 :quantity (if (= "city" settlement) 2 1)})
-        inventory (->> yield
-                       (group-by :resource)
-                       (reduce allocate-resource inventory))]
-    (assoc m :dice dice :inventory inventory)))
-
-(defn roll! [game-name]
-  (swap! state update game-name roll))
-
 (defn get-dice [game-name]
   (get-in @state [game-name :dice]))
 
@@ -605,13 +584,10 @@
 
 (defn- road-length
   ([edges]
-   (some->>
+   (sort-by second >
     (for [[edge color] edges]
-      [color (road-length edges edge color #{})])
-    not-empty
-    (util/max-by second)))
+      [color (road-length edges edge color #{})])))
   ([edges edge color done]
-   (prn edge done)
    (or
     (some->> edge
              e->e
@@ -622,3 +598,43 @@
              (apply max)
              inc)
     1)))
+
+(defn- roll [m]
+  (let [{:keys [nodes edges knight knights longest-road outputs terrains robber inventory]} m
+        outputs (assoc outputs robber -1)
+        dice [(inc (rand-int 6)) (inc (rand-int 6))]
+        sum (apply + dice)
+        yield (for [[i output terrain] (map list (range) outputs terrains)
+                    :when (= output sum)
+                    j (range 6)
+                    :let [[color settlement] (-> [i j] node-downgrade nodes)]
+                    :when settlement]
+                {:player color
+                 :resource terrain
+                 :quantity (if (= "city" settlement) 2 1)})
+        inventory (->> yield
+                       (group-by :resource)
+                       (reduce allocate-resource inventory))
+        ;; next need to calculate knights and road points
+        [[first-color first-knight]
+         [_ second-knight]] (sort-by second > knights)
+        knight (if (and
+                    first-knight
+                    (>= first-knight 3)
+                    (or (not second-knight) (> first-knight second-knight))
+                    (> first-knight (second knight)))
+                 [first-color first-knight]
+                 knight)
+        [[longest-color road-length]
+         [_ second-road-length]] (road-length edges)
+        longest-road (if (and
+                           road-length
+                          (>= road-length 5)
+                          (or (not second-road-length) (> road-length second-road-length))
+                          (> road-length (second longest-road)))
+                       [longest-color road-length]
+                       longest-road)]
+    (assoc m :dice dice :inventory inventory :knight knight :longest-road longest-road)))
+
+(defn roll! [game-name]
+  (swap! state update game-name roll))
