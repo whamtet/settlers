@@ -1,5 +1,6 @@
 (ns ctmx.catan.web.views.board.inventory
     (:require
+      [clojure.string :as string]
       [ctmx.catan.component :refer [defcomponent]]
       [ctmx.catan.sse :as sse]
       [ctmx.catan.state :as state]))
@@ -14,19 +15,34 @@
         {:hx-post "inventory:send"
          :hx-vals {:from color :resource resource :to other-color}
          :hx-include hx-include
-         :hx-confirm (format "Send %s to %s?" name other-color)} "Send to " other-color])]))
+         :hx-confirm (format "Send %s to %s?" name other-color)} "Send to " other-color])
+     [:button.btn.btn-primary.ml-3
+      {:hx-post "inventory:pick-up"
+       :hx-vals {:resource resource}} "Pick up"]]))
+
+(defn- small-inventory [resource-str infra-str]
+  [:div.p-1 {:style {:position "absolute" :top "90px"}}
+   [:div resource-str]
+   [:div infra-str]])
 
 (defn- disp-inventory [game-name selected-resource color]
   (let [inv (state/get-inventory game-name color)
         prices (state/trading-privileges game-name color)
-        [cities settlements roads] (state/get-infrastructure game-name color)]
+        resource-str
+        (->> state/inv->name
+             (map
+              (fn [[resource name]]
+                (format "%s: %s" name (inv resource 0))))
+             (string/join " "))
+        infra-str
+        (apply format "%s cities, %s settlements, %s roads available"
+               (state/get-infrastructure game-name color))]
     [:div#inventory.mb-3
+     (small-inventory resource-str infra-str)
      [:h2 "Inventory"]
      [:table.table
       [:tbody
-       [:tr [:td cities " cities "
-             settlements " settlements and "
-             roads " roads available."]]
+       [:tr [:td infra-str]]
        (for [[resource name] state/inv->name
              :let [count (inv resource 0)]]
          [:tr
@@ -68,4 +84,7 @@
         (when (and from (not= from to))
               (state/buy! game-name color from to)
               (update-inventory game-name to))
+        "pick-up" (do
+                    (state/send-inv! game-name "bank" resource color 1)
+                    (update-inventory game-name))
         (disp-inventory game-name nil color)))
