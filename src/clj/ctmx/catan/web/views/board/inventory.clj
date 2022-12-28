@@ -16,23 +16,11 @@
          :hx-include hx-include
          :hx-confirm (format "Send %s to %s?" name other-color)} "Send to " other-color])]))
 
-(defn- disp-thiever [game-name color]
-  [:div#thiever.mb-3
-   (for [[player count] (state/card-counts game-name)
-         :when (not= player color)]
-     [:button.btn.btn-primary.mr-3
-      {:hx-post "inventory:steal"
-       :hx-vals {:from player}
-       :hx-confirm (format "Steal from %s?" player)
-       :disabled (zero? count)}
-      (format "Steal from %s (%s)" player count)])])
-
 (defn disp-inventory [game-name color]
   (let [inv (state/get-inventory game-name color)
         prices (state/trading-privileges game-name color)
         [cities settlements roads] (state/get-infrastructure game-name color)]
     [:div#inventory.mb-3
-     (disp-thiever game-name color)
      [:h2 "Inventory"]
      [:table.table
       [:tbody
@@ -81,8 +69,4 @@
         (when (and from (not= from to))
               (state/buy! game-name color from to)
               (update-inventory game-name))
-        "steal"
-        (do
-          (state/steal! game-name from color)
-          (update-inventory game-name))
         (disp-inventory game-name color)))

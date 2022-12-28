@@ -375,18 +375,6 @@
 (defn get-dice [game-name]
   (get-in @state [game-name :dice]))
 
-(defn- steal [inventory from to]
-  (let [available (for [[resource quantity] (inventory from)
-                        _ (range quantity)] resource)]
-    (if (not-empty available)
-      (let [stolen (rand-nth available)]
-        (-> inventory
-            (update-in [from stolen] dec)
-            (update-in [to stolen] safe+ 1)))
-      inventory)))
-(defn steal! [game-name from to]
-  (swap! state update-in [game-name :inventory] steal from to))
-
 (defn card-counts [game-name]
   (for [[player inventory] (get-in @state [game-name :inventory])
         :when (not= "bank" player)]
@@ -531,9 +519,6 @@
 (defn retrieve! [game-name player]
   (swap! state update game-name retrieve player))
 
-(defonce __
-  (swap! state assoc-in ["asdf" :playing] {:title "Monopoly" :body "blaa blaa" :player "red"}))
-
 (defn- monopolize [{:keys [inventory] :as m} player resource]
   (let [total (->> inventory
                    vals
@@ -547,3 +532,34 @@
         (assoc :inventory inventory))))
 (defn monopolize! [game-name player resource]
   (swap! state update game-name monopolize player resource))
+
+(defn road [m player]
+  (-> m
+      (dissoc :playing)
+      (update-in [:inventory player] #(merge-with safe+ % (materials "road") (materials "road")))))
+(defn road! [game-name player]
+  (swap! state update game-name road player))
+
+(defn plenty [m player resource]
+  (if (-> m :playing :partial)
+    (-> m
+        (dissoc :playing)
+        (update-in [:inventory player resource] safe+ 1))
+    (-> m
+        (assoc-in [:playing :partial] resource)
+        (update-in [:inventory player resource] safe+ 1))))
+(defn plenty! [game-name player resource]
+  (swap! state update game-name plenty player resource))
+
+(defn- steal [m from to]
+  (let [available (for [[resource quantity] (get-in m [:inventory from])
+                        _ (range quantity)] resource)
+        m (-> m (dissoc :playing) (update-in [:knights to] safe+ 1))]
+    (if (not-empty available)
+      (let [stolen (rand-nth available)]
+        (-> m
+            (update-in [:inventory from stolen] dec)
+            (update-in [:inventory to stolen] safe+ 1)))
+      m)))
+(defn steal! [game-name from to]
+  (swap! state update game-name steal from to))

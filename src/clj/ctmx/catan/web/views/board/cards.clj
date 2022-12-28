@@ -20,16 +20,28 @@
       :hx-confirm "Return card?"
       :hx-vals {:i i}} "Return"]]])
 
+(defn- disp-thiever [game-name color]
+  (for [[player count] (state/card-counts game-name)
+        :when (not= player color)]
+    [:button.btn.btn-primary.mr-3
+     {:hx-post "cards:steal"
+      :hx-vals {:from player}
+      :hx-confirm (format "Steal from %s?" player)
+      :disabled (zero? count)}
+     (format "Steal from %s (%s)" player count)]))
+
 (defn- public-area [game-name color]
-  (if-let [{:keys [player title body]} (state/get-card game-name)]
+  (if-let [{:keys [player title body partial]} (state/get-card game-name)]
     [:div#public-card
      [:div.p-3
       [:span {:style {:color player}} player] " is playing " title ": " body]
+     (when partial
+           [:div.p-3 "Already took 1 " (state/inv->name partial)])
      (when (= player color)
            [:div.mb-2
             [:button.btn.btn-primary.mr-3
              {:hx-post "cards:retrieve"
-              :hx-target "#cards"} "Take back card"]
+              :hx-target "#cards"} "Put back card"]
             (case title
                   "Monopoly"
                   (for [[resource name] state/inv->name]
@@ -37,13 +49,23 @@
                      {:hx-post "cards:monopolize"
                       :hx-vals {:resource resource}}
                      "Grab " name])
+                  "Road Building"
+                  [:button.btn.btn-primary.mr-3
+                   {:hx-post "cards:road"} "Play"]
+                  "Year of Plenty"
+                  (for [[resource name] state/inv->name]
+                    [:button.btn.btn-primary.mr-3
+                     {:hx-post "cards:plenty"
+                      :hx-vals {:resource resource}}
+                     "Take " name])
+                  "Knight" (disp-thiever game-name color)
                   nil)])]
     [:div#public-card]))
 
 (defn update-public-area [game-name]
   (sse/send-color! game-name (partial public-area game-name)))
 
-(defcomponent ^:endpoint cards [req command ^:long i resource]
+(defcomponent ^:endpoint cards [req command ^:long i resource from]
   (case command
         "pick-up" (do
                     (state/pick-up! game-name color)
@@ -58,8 +80,20 @@
                        (state/monopolize! game-name color resource)
                        (update-public-area game-name)
                        (inventory/update-inventory game-name))
+        "road" (do
+                 (state/road! game-name color)
+                 (update-public-area game-name)
+                 (inventory/update-inventory game-name))
+        "plenty" (do
+                   (state/plenty! game-name color resource)
+                   (update-public-area game-name)
+                   (inventory/update-inventory game-name))
+        "steal" (do
+                  (state/steal! game-name from color)
+                  (update-public-area game-name)
+                  (inventory/update-inventory game-name))
         nil)
-  (when-not (#{"monopolize"} command)
+  (when-not (#{"monopolize" "road" "plenty" "steal"} command)
             [:div#cards.border
              (public-area game-name color)
              [:div.d-flex
