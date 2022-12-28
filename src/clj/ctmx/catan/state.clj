@@ -261,8 +261,8 @@
      :nodes (if random? {} nodes)
      :edges (if random? {} edges)
      :cities (zipmap colors (repeat 4))
-     :settlements (zipmap colors (repeat 3))
-     :roads (zipmap colors (repeat 13))
+     :settlements (zipmap colors (repeat (if random? 5 3)))
+     :roads (zipmap colors (repeat (if random? 15 13)))
      :inventory (if random?
                   (reduce
                    (fn [inv color]
@@ -519,6 +519,16 @@
         m))))
 (defn play! [game-name player i]
   (swap! state update game-name play player i))
+
+(defn return [m player i]
+  (let [[card cards] (remove-seq (get-in m [:hands player]) i)]
+    (if card
+      (-> m
+          (update :cards #(-> % (conj card) shuffle))
+          (assoc-in [:hands player] cards))
+      m)))
+(defn return! [game-name player i]
+  (swap! state update game-name return player i))
 
 (defn get-card [game-name]
   (get-in @state [game-name :playing]))

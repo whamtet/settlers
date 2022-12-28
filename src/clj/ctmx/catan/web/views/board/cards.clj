@@ -5,20 +5,23 @@
       [ctmx.catan.state :as state]
       [ctmx.catan.web.views.board.inventory :as inventory]))
 
+(def playable? #{"Monopoly" "Road Building" "Year of Plenty" "Knight"})
 (defn- card [i {:keys [title body]}]
   [:div.p-3
    [:h5 title]
    [:p body]
-   [:div.mb-2
-    [:button.btn.btn-primary
-     {:hx-post "cards:play"
-      :hx-target "#cards"
-      :hx-vals {:i i}} "Play"]]
+   (when (playable? title)
+         [:div.mb-2
+          [:button.btn.btn-primary
+           {:hx-post "cards:play"
+            :hx-target "#cards"
+            :hx-vals {:i i}} "Play"]])
    [:div
     [:button.btn.btn-primary
      {:hx-post "cards:return"
-      :hx-confirm "Return card?"
-      :hx-vals {:i i}} "Return"]]])
+      :hx-confirm (format "Return %s card to deck?" title)
+      :hx-target "#cards"
+      :hx-vals {:i i}} "Return to deck"]]])
 
 (defn- disp-thiever [game-name color]
   (for [[player count] (state/card-counts game-name)
@@ -76,6 +79,7 @@
         "retrieve" (do
                      (state/retrieve! game-name color)
                      (update-public-area game-name))
+        "return" (state/return! game-name color i)
         "monopolize" (do
                        (state/monopolize! game-name color resource)
                        (update-public-area game-name)
