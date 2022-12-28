@@ -551,18 +551,22 @@
 (defn plenty! [game-name player resource]
   (swap! state update game-name plenty player resource))
 
-(defn- steal [m from to]
+(defn- steal [m from to knight?]
   (let [available (for [[resource quantity] (get-in m [:inventory from])
                         _ (range quantity)] resource)
-        m (-> m (dissoc :playing) (update-in [:knights to] safe+ 1))]
+        m (if knight?
+            (-> m (dissoc :playing) (update-in [:knights to] safe+ 1))
+            m)]
     (if (not-empty available)
       (let [stolen (rand-nth available)]
         (-> m
             (update-in [:inventory from stolen] dec)
             (update-in [:inventory to stolen] safe+ 1)))
       m)))
-(defn steal! [game-name from to]
-  (swap! state update game-name steal from to))
+(defn steal-knight! [game-name from to]
+  (swap! state update game-name steal from to true))
+(defn steal-board! [game-name from to]
+  (swap! state update game-name steal from to false))
 
 (def decn #(mod (dec %) 6))
 (def graph-data

@@ -41,3 +41,6 @@
   ([game-name f colors]
     (doseq [color colors]
       (send! game-name (f color) #{color}))))
+
+(defn send-others! [game-name color html]
+  (send! game-name html (disj state/valid-color? color)))

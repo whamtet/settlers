@@ -16,7 +16,7 @@
          :hx-include hx-include
          :hx-confirm (format "Send %s to %s?" name other-color)} "Send to " other-color])]))
 
-(defn disp-inventory [game-name color]
+(defn- disp-inventory [game-name selected-resource color]
   (let [inv (state/get-inventory game-name color)
         prices (state/trading-privileges game-name color)
         [cities settlements roads] (state/get-infrastructure game-name color)]
@@ -40,7 +40,7 @@
      [:div
       [:select.to-select.mr-3 {:name "to"}
        (for [[resource name] state/inv->name]
-         [:option {:value resource} name])]
+         [:option {:value resource :selected (= selected-resource resource)} name])]
       (for [[resource name] state/inv->name
             :let [price (prices resource 4)
                   available (inv resource 0)]]
@@ -53,20 +53,19 @@
           (format "Buy with %s (%s)" name price)])]
      ]))
 
-(defn update-inventory [game-name]
-  (sse/send-color! game-name (partial disp-inventory game-name)))
+(defn update-inventory
+  ([game-name] (update-inventory game-name nil))
+  ([game-name resource]
+   (sse/send-color! game-name (partial disp-inventory game-name resource))))
 
 (defcomponent ^:endpoint inventory [req from resource to ^:long count command from]
   (case command
         "send" (do
                  (prn (java.util.Date.) 'send from resource to count)
                  (state/send-inv! game-name from resource to count)
-                 (sse/send-color!
-                   game-name
-                  (partial disp-inventory game-name)
-                  [from to]))
+                 (update-inventory game-name))
         "buy"
         (when (and from (not= from to))
               (state/buy! game-name color from to)
-              (update-inventory game-name))
-        (disp-inventory game-name color)))
+              (update-inventory game-name to))
+        (disp-inventory game-name nil color)))

@@ -89,7 +89,7 @@
                    (update-public-area game-name)
                    (inventory/update-inventory game-name))
         "steal" (do
-                  (state/steal! game-name from color)
+                  (state/steal-knight! game-name from color)
                   (update-public-area game-name)
                   (inventory/update-inventory game-name))
         nil)
