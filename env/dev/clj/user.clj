@@ -40,7 +40,7 @@
 (repl/set-refresh-dirs "src/clj")
 
 (def refresh repl/refresh)
-
+(use 'clojure.repl)
 
 
 (comment

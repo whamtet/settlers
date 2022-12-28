@@ -413,8 +413,8 @@
                existing (inc roads)
                :else roads)
         inventory (cond
-                   new (merge-with safe+ inventory (materials "road"))
-                   existing (merge-with - inventory (materials "road"))
+                   new (merge-with - inventory (materials "road"))
+                   existing (merge-with + inventory (materials "road"))
                    :else inventory)
         edge (when new player)]
     (-> m
@@ -452,8 +452,8 @@
         (case [existing new]
               [nil "settlement"] (merge-with - inventory (materials "settlement"))
               ["settlement" "city"] (merge-with - inventory (materials "city"))
-              ["city" nil] (merge-with safe+ inventory (materials "settlement") (materials "city"))
-              ["settlement" nil] (merge-with safe+ inventory (materials "settlement"))
+              ["city" nil] (merge-with + inventory (materials "settlement") (materials "city"))
+              ["settlement" nil] (merge-with + inventory (materials "settlement"))
               inventory)
         node (when new [player new])]
     (-> m
@@ -536,7 +536,7 @@
 (defn road [m player]
   (-> m
       (dissoc :playing)
-      (update-in [:inventory player] #(merge-with safe+ % (materials "road") (materials "road")))))
+      (update-in [:inventory player] #(merge-with + % (materials "road") (materials "road")))))
 (defn road! [game-name player]
   (swap! state update game-name road player))
 
@@ -563,3 +563,19 @@
       m)))
 (defn steal! [game-name from to]
   (swap! state update game-name steal from to))
+
+(def decn #(mod (dec %) 6))
+(def graph-data
+  (for [i (range 19) j (range 6)
+        :let [edge [i j]]
+        :when (not (edge-downgrade* edge))]
+    [edge
+     (node-downgrade (update edge 1 decn))
+     (node-downgrade edge)]))
+
+(def n1->e (util/group-by-map second first graph-data))
+(def n2->e (util/group-by-map peek first graph-data))
+(def e->e
+  (into {}
+        (for [[e n1 n2] graph-data]
+          [e (-> (concat (n1->e n1) (n2->e n2)) set (disj e))])))

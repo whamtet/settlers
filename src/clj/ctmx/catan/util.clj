@@ -4,3 +4,6 @@
   (zipmap (map f (keys m)) (vals m)))
 (defn valmap [f m]
   (zipmap (keys m) (map f (vals m))))
+
+(defn group-by-map [kf vf s]
+  (->> s (group-by kf) (valmap vf)))
