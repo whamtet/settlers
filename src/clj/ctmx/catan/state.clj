@@ -23,6 +23,8 @@
    ["Chapel" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]
    ["Library" 1 "One victory point. Reveal this card on your turn if, with it, you reach the number of points required for victory."]])
 
+(def vp-card? (->> cards-raw (take-last 5) (map first) set))
+
 (defn cards []
   (shuffle
    (for [[title repeats body] cards-raw
@@ -279,7 +281,7 @@
 (defonce _
   (if (.exists dump-file)
     (->> dump-file slurp read-string (reset! state))
-    (add-game "asdf" true)))
+    (add-game "asdf" false)))
 
 (defn delete-game [game-name]
   (swap! state dissoc game-name))
@@ -585,8 +587,8 @@
 (defn- road-length
   ([edges]
    (sort-by second >
-    (for [[edge color] edges]
-      [color (road-length edges edge color #{})])))
+            (for [[edge color] edges]
+              [color (road-length edges edge color #{})])))
   ([edges edge color done]
    (or
     (some->> edge
@@ -628,7 +630,7 @@
         [[longest-color road-length]
          [_ second-road-length]] (road-length edges)
         longest-road (if (and
-                           road-length
+                          road-length
                           (>= road-length 5)
                           (or (not second-road-length) (> road-length second-road-length))
                           (> road-length (second longest-road)))
@@ -638,3 +640,26 @@
 
 (defn roll! [game-name]
   (swap! state update game-name roll))
+
+(defn victory-points [game-name color]
+  (let [{:keys [nodes knight longest-road hands]} (@state game-name)
+        [knight-color knight] knight
+        [road-color road-length] longest-road
+        infrastructure-points (->> nodes
+                                   vals
+                                   (filter (fn [[c]] (= c color)))
+                                   (mapcat (fn [[_ type]]
+                                             (case
+                                              "settlement" ["settlements"]
+                                              "city" ["cities" "cities"])))
+                                   frequencies)
+        card-points (->> color
+                         hands
+                         (map :title)
+                         (filter vp-card?)
+                         frequencies)]
+    (merge
+     infrastructure-points
+     card-points
+     {"knight" (when (= color knight-color) knight)
+      "road" (when (= color road-color) road-length)})))

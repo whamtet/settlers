@@ -6,6 +6,7 @@
       [ctmx.catan.web.views.board.dice :as dice]
       [ctmx.catan.web.views.board :as board]
       [ctmx.catan.web.views.board.inventory :as inventory]
+      [ctmx.catan.web.views.board.vp :as vp]
       [ctmx.response :as response]))
 
 (def menu-bar
@@ -32,4 +33,5 @@
          (dice/dice req)
          (inventory/inventory req)
          [:hr]
-         (cards/cards req)]))
+         (cards/cards req)
+         (vp/disp-vp game-name color)]))
