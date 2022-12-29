@@ -25,14 +25,19 @@
       :hx-vals {:i i}} "Return to deck"]]])
 
 (defn- disp-thiever [game-name color]
-  (for [[player count] (state/card-counts game-name)
-        :when (not= player color)]
-    [:button.btn.btn-primary.mr-3
-     {:hx-post "cards:steal"
-      :hx-vals {:from player}
-      :hx-confirm (format "Steal from %s?" player)
-      :disabled (zero? count)}
-     (format "Steal from %s (%s)" player count)]))
+  [:span
+   (for [[player count] (state/card-counts game-name)
+         :when (not= player color)]
+     [:button.btn.btn-primary.mr-3
+      {:hx-post "cards:steal"
+       :hx-vals {:from player}
+       :hx-confirm (format "Steal from %s?" player)
+       :disabled (zero? count)}
+      (format "Steal from %s (%s)" player count)])
+   [:button.btn.btn-primary.mr-3
+    {:hx-post "cards:steal"
+     :hx-confirm "Play without stealing?"}
+    "Play without stealing"]])
 
 (defn- public-area [game-name color]
   (if-let [{:keys [player title body partial]} (state/get-card game-name)]
@@ -99,7 +104,7 @@
         "steal" (do
                   (state/steal-knight! game-name from color)
                   (update-public-area game-name)
-                  (vp/update-vp)
+                  (vp/update-vp game-name)
                   (inventory/update-inventory game-name))
         nil)
   (when-not (#{"monopolize" "road" "plenty" "steal"} command)

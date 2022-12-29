@@ -277,12 +277,6 @@
 (defn add-game [game-name random?]
   (swap! state assoc game-name (new-game random?)))
 
-(def dump-file (File. "dump.edn"))
-(defonce _
-  (if (.exists dump-file)
-    (->> dump-file slurp read-string (reset! state))
-    (add-game "asdf" false)))
-
 (defn delete-game [game-name]
   (swap! state dissoc game-name))
 
@@ -455,6 +449,7 @@
 (defn build-node! [game-name player i j]
   (swap! state update game-name build-node player [i j]))
 
+(def dump-file (File. "dump.edn"))
 (defn dump-state []
   (spit dump-file (pr-str @state)))
 
@@ -666,3 +661,11 @@
      card-points
      {"knight" (when (= color knight-color) knight)
       "road" (when (= color road-color) road-length)})))
+
+(defonce _
+  (if (.exists dump-file)
+    (->> dump-file slurp read-string (reset! state))
+    (do
+      (add-game "asdf" false)
+      (doseq [terrain terrains]
+        (send-inv! "asdf" "bank" terrain "red" 1)))))

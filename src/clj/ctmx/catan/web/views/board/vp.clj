@@ -13,9 +13,10 @@
     [:div#vp.p-5
      [:h3 "Victory Points"]
      (for [card cards
-           :let [points (points card)]
+           :let [points (points card)
+                 point-str (if (= 1 points) "point" "points")]
            :when points]
-       [:div points " points for " card "."])
+       [:div (format "%s %s for %s." points point-str card)])
      (when knight
            [:div "Two points for using knight cards " knight " times."])
      (when road
