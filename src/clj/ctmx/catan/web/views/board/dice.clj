@@ -3,7 +3,8 @@
       [ctmx.catan.component :refer [defcomponent]]
       [ctmx.catan.sse :as sse]
       [ctmx.catan.state :as state]
-      [ctmx.catan.web.views.board.inventory :as inventory]))
+      [ctmx.catan.web.views.board.inventory :as inventory]
+      [ctmx.catan.web.views.board.vp :as vp]))
 
 (defn- disp-thiever [game-name color]
   [:div.mb-2
@@ -37,6 +38,7 @@
                  (state/roll! game-name)
                  (sse/send-others! game-name color (disp-dice game-name nil))
                  (inventory/update-inventory game-name)
+                 (vp/update-vp game-name)
                  (disp-dice game-name color))
         "steal" (do
                   (state/steal-board! game-name from color)

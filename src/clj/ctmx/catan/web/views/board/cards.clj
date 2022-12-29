@@ -3,7 +3,8 @@
       [ctmx.catan.component :refer [defcomponent]]
       [ctmx.catan.sse :as sse]
       [ctmx.catan.state :as state]
-      [ctmx.catan.web.views.board.inventory :as inventory]))
+      [ctmx.catan.web.views.board.inventory :as inventory]
+      [ctmx.catan.web.views.board.vp :as vp]))
 
 (def playable? #{"Monopoly" "Road Building" "Year of Plenty" "Knight"})
 (defn- card [i {:keys [title body]}]
@@ -72,6 +73,7 @@
   (case command
         "pick-up" (do
                     (state/pick-up! game-name color)
+                    (vp/update-vp game-name)
                     (inventory/update-inventory game-name))
         "play" (do
                  (state/play! game-name color i)
@@ -79,7 +81,9 @@
         "retrieve" (do
                      (state/retrieve! game-name color)
                      (update-public-area game-name))
-        "return" (state/return! game-name color i)
+        "return" (do
+                   (state/return! game-name color i)
+                   (vp/update-vp game-name))
         "monopolize" (do
                        (state/monopolize! game-name color resource)
                        (update-public-area game-name)
@@ -95,6 +99,7 @@
         "steal" (do
                   (state/steal-knight! game-name from color)
                   (update-public-area game-name)
+                  (vp/update-vp)
                   (inventory/update-inventory game-name))
         nil)
   (when-not (#{"monopolize" "road" "plenty" "steal"} command)

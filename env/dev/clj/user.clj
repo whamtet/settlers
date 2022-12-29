@@ -41,7 +41,7 @@
 
 (def refresh repl/refresh)
 (use 'clojure.repl)
-
+(use 'clojure.pprint)
 
 (comment
   (go)

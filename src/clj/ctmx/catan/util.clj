@@ -6,6 +6,8 @@
   (zipmap (keys m) (map f (vals m))))
 
 (def invert #(zipmap (vals %) (keys %)))
+(defn group-by-map [fk fv s]
+  (->> s (group-by fk) (valmap fv)))
 
 #_
 (defn max-by [f [x & rest]]

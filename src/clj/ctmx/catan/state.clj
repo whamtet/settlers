@@ -584,11 +584,12 @@
             (when-let [edge (edge-upgrade* edge)]
               [(dec-edge edge) (inc-edge edge)]))])))
 
-(defn- road-length
+(defn road-length
   ([edges]
-   (sort-by second >
-            (for [[edge color] edges]
-              [color (road-length edges edge color #{})])))
+   (->> (for [[edge color] edges]
+          [color (road-length edges edge color #{})])
+        (util/group-by-map first #(->> % (map second) (apply max)))
+        (sort-by second >)))
   ([edges edge color done]
    (or
     (some->> edge
@@ -601,6 +602,8 @@
              inc)
     1)))
 
+(defn- safe> [a b]
+  (or (not b) (> a b)))
 (defn- roll [m]
   (let [{:keys [nodes edges knight knights longest-road outputs terrains robber inventory]} m
         outputs (assoc outputs robber -1)
@@ -623,8 +626,8 @@
         knight (if (and
                     first-knight
                     (>= first-knight 3)
-                    (or (not second-knight) (> first-knight second-knight))
-                    (> first-knight (second knight)))
+                    (safe> first-knight second-knight)
+                    (safe> first-knight (second knight)))
                  [first-color first-knight]
                  knight)
         [[longest-color road-length]
@@ -632,8 +635,8 @@
         longest-road (if (and
                           road-length
                           (>= road-length 5)
-                          (or (not second-road-length) (> road-length second-road-length))
-                          (> road-length (second longest-road)))
+                          (safe> road-length second-road-length)
+                          (safe> road-length (second longest-road)))
                        [longest-color road-length]
                        longest-road)]
     (assoc m :dice dice :inventory inventory :knight knight :longest-road longest-road)))

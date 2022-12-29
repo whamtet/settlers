@@ -50,6 +50,7 @@
                  (send-form color resource name count))
            [:button.btn.btn-primary.ml-3
             {:hx-post "inventory:pick-up"
+             :hx-confirm "Pick up for free from bank?"
              :hx-vals {:resource resource}} "Pick up"]]])]]
      [:hr]
      [:h4 "Buy from abroad"]

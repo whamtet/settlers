@@ -5,6 +5,7 @@
       [ctmx.catan.svg :as svg :refer [vec+]]
       [ctmx.catan.web.views.board.inventory :as inventory]
       [ctmx.catan.web.views.board.settlement :as settlement]
+      [ctmx.catan.web.views.board.vp :as vp]
       [ctmx.catan.component :refer [defcomponent]]
       [ctmx.response :as response]))
 
@@ -122,9 +123,11 @@
         "node" (do
                  (state/build-node! game-name color i j)
                  (sse/send! game-name (board-disp game-name color))
+                 (vp/update-vp game-name)
                  (inventory/update-inventory game-name))
         "edge" (do
                  (state/build-edge! game-name color i j)
                  (sse/send! game-name (board-disp game-name color))
+                 (vp/update-vp game-name)
                  (inventory/update-inventory game-name))
         (board-disp game-name color)))
