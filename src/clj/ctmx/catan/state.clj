@@ -383,28 +383,33 @@
      (>= (available resource 0) count))
    required))
 
+(defn transfer [inventory from to items]
+  (let [items-total (->> items (map materials) (apply merge-with +))]
+    (-> inventory
+        (update from #(merge-with - % items-total))
+        (update to #(merge-with + % items-total)))))
+
 (defn- build-edge [m player v]
   (let [{:keys [edges inventory roads]} m
         roads (roads player)
-        inventory (inventory player)
         v (edge-downgrade v)
         existing (edges v)
         new (and
              (not existing)
-             (enough? (materials "road") inventory)
+             (enough? (materials "road") (inventory player))
              (pos? roads))
         roads (cond
                new (dec roads)
                existing (inc roads)
                :else roads)
         inventory (cond
-                   new (merge-with - inventory (materials "road"))
-                   existing (merge-with + inventory (materials "road"))
+                   new (transfer inventory player "bank" ["road"])
+                   existing (transfer inventory "bank" player ["road"])
                    :else inventory)
         edge (when new player)]
     (-> m
         (assoc-in [:roads player] roads)
-        (assoc-in [:inventory player] inventory)
+        (assoc :inventory inventory)
         (assoc-in [:edges v] edge))))
 (defn build-edge! [game-name player i j]
   (swap! state update game-name build-edge player [i j]))
@@ -413,16 +418,15 @@
   (let [{:keys [nodes inventory cities settlements]} m
         cities (cities player)
         settlements (settlements player)
-        inventory (inventory player)
         v (node-downgrade v)
         [_ existing] (nodes v)
         new (case existing
                   nil (when (and
-                             (enough? (materials "settlement") inventory)
+                             (enough? (materials "settlement") (inventory player))
                              (pos? settlements))
                             "settlement")
                   "settlement" (when (and
-                                      (enough? (materials "city") inventory)
+                                      (enough? (materials "city") (inventory player))
                                       (pos? cities))
                                      "city")
                   "city" nil)
@@ -435,16 +439,16 @@
               [cities settlements])
         inventory
         (case [existing new]
-              [nil "settlement"] (merge-with - inventory (materials "settlement"))
-              ["settlement" "city"] (merge-with - inventory (materials "city"))
-              ["city" nil] (merge-with + inventory (materials "settlement") (materials "city"))
-              ["settlement" nil] (merge-with + inventory (materials "settlement"))
+              [nil "settlement"] (transfer inventory player "bank" ["settlement"])
+              ["settlement" "city"] (transfer inventory player "bank" ["city"])
+              ["city" nil] (transfer inventory "bank" player ["city" "settlement"])
+              ["settlement" nil] (transfer inventory "bank" player ["settlement"])
               inventory)
         node (when new [player new])]
     (-> m
         (assoc-in [:cities player] cities)
         (assoc-in [:settlements player] settlements)
-        (assoc-in [:inventory player] inventory)
+        (assoc :inventory inventory)
         (assoc-in [:nodes v] node))))
 (defn build-node! [game-name player i j]
   (swap! state update game-name build-node player [i j]))
@@ -465,7 +469,7 @@
     (if (and card (enough? (materials "card") inventory))
       (-> m
           (update-in [:hands player] conj card)
-          (update-in [:inventory player] #(merge-with - % (materials "card")))
+          (update :inventory #(transfer % player "bank" ["card"]))
           (assoc :cards cards))
       m)))
 (defn pick-up! [game-name player]
@@ -498,6 +502,7 @@
     (if card
       (-> m
           (update :cards #(-> % (conj card) shuffle))
+          (update :inventory #(transfer % "bank" player ["card"]))
           (assoc-in [:hands player] cards))
       m)))
 (defn return! [game-name player i]
@@ -532,7 +537,7 @@
 (defn road [m player]
   (-> m
       (dissoc :playing)
-      (update-in [:inventory player] #(merge-with + % (materials "road") (materials "road")))))
+      (update :inventory #(transfer % "bank" player ["road" "road"]))))
 (defn road! [game-name player]
   (swap! state update game-name road player))
 

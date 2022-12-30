@@ -29,6 +29,7 @@
          (when (empty? (state/games))
                [:div "No games, please create one below"])
          [:hr]
+         [:h1 "New game"]
          [:form {:hx-post "menu:create" :hx-confirm "Create game?"}
           [:label.mr-3 "Game name"]
           [:input.mr-3 {:type "text" :required true :name "game-name"}]
