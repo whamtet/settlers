@@ -62,7 +62,7 @@
                   [:button.btn.btn-primary.mr-3
                    {:hx-post "cards:road"} "Play"]
                   "Year of Plenty"
-                  (for [[resource name] state/inv->name]
+                  (for [[resource name] (state/get-plenty game-name)]
                     [:button.btn.btn-primary.mr-3
                      {:hx-post "cards:plenty"
                       :hx-vals {:resource resource}}

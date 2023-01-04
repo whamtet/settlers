@@ -300,7 +300,7 @@
   (assert (inv->name resource))
   (let [actual-quantity (-> quantity
                             (max 0)
-                            (min (get-in m [from resource] 0)))]
+                            (min (get-in m [from resource])))]
     (-> m
         (update-in [from resource] - actual-quantity)
         (update-in [to resource] safe+ actual-quantity))))
@@ -308,8 +308,8 @@
 (defn send-inv! [game-name from resource to quantity]
   (swap! state update-in [game-name :inventory] send-inv from resource to quantity))
 
-(def wildport (zipmap terrains (repeat 3)))
 (def port-order ["pasture" "hills" "forest" "fields" "mountains"])
+(def wildport (zipmap port-order (repeat 3)))
 (def port #(hash-map (port-order %) 2))
 
 (def ports
@@ -355,19 +355,6 @@
     (assoc-in m [:inventory player] inventory)))
 (defn buy! [game-name player from to]
   (swap! state update game-name buy player from to))
-
-(defn- allocate-resource [inventory [resource data]]
-  (let [available (get-in inventory ["bank" resource])
-        required (->> data (map :quantity) (apply +))
-        num-required (->> data (map :player) distinct count)]
-    (if (or (>= available required) (= 1 num-required))
-      (reduce (fn [inventory {:keys [player quantity]}]
-                (-> inventory
-                    (update-in ["bank" resource] - quantity)
-                    (update-in [player resource] safe+ quantity)))
-              inventory
-              data)
-      inventory)))
 
 (defn get-dice [game-name]
   (get-in @state [game-name :dice]))
@@ -474,13 +461,20 @@
       m)))
 (defn pick-up! [game-name player]
   (swap! state update game-name pick-up player))
+
+(defn- pick-up-specific [m player title]
+  (let [{:keys [cards]} m
+        [pre [card & cards]] (split-with #(-> % :title (not= title)) cards)]
+    (if card
+      (-> m
+          (update-in [:hands player] conj card)
+          (assoc :cards (concat pre cards)))
+      m)))
+(defn pick-up-specific! [game-name player title]
+  (swap! state update game-name pick-up-specific player title))
+
 (defn get-cards [game-name player]
   (get-in @state [game-name :hands player]))
-
-(defn- dissoc-i [s i]
-  (concat
-   (take i s)
-   (drop (inc i) s)))
 
 (defn- remove-seq [s i]
   (let [[pre [card & rest]] (split-at i s)]
@@ -545,12 +539,17 @@
   (if (-> m :playing :partial)
     (-> m
         (dissoc :playing)
+        (update-in [:inventory "bank" resource] dec)
         (update-in [:inventory player resource] safe+ 1))
     (-> m
         (assoc-in [:playing :partial] resource)
+        (update-in [:inventory "bank" resource] dec)
         (update-in [:inventory player resource] safe+ 1))))
 (defn plenty! [game-name player resource]
   (swap! state update game-name plenty player resource))
+(defn get-plenty [game-name]
+  (for [[resource count] (get-in @state [game-name :inventory "bank"])
+        :when (pos? count)] [resource (inv->name resource)]))
 
 (defn- steal [m from to knight?]
   (let [available (for [[resource quantity] (get-in m [:inventory from])
@@ -601,6 +600,19 @@
              (apply max)
              inc)
     1)))
+
+(defn- allocate-resource [inventory [resource data]]
+  (let [available (get-in inventory ["bank" resource])
+        required (->> data (map :quantity) (apply +))
+        num-required (->> data (map :player) distinct count)]
+    (if (or (>= available required) (= 1 num-required))
+      (reduce (fn [inventory {:keys [player quantity]}]
+                (-> inventory
+                    (update-in ["bank" resource] - quantity)
+                    (update-in [player resource] safe+ quantity)))
+              inventory
+              data)
+      inventory)))
 
 (defn- safe> [a b]
   (or (not b) (> a b)))
