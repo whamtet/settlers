@@ -664,7 +664,7 @@
                                    vals
                                    (filter (fn [[c]] (= c color)))
                                    (mapcat (fn [[_ type]]
-                                             (case
+                                             (case type
                                               "settlement" ["settlements"]
                                               "city" ["cities" "cities"])))
                                    frequencies)
