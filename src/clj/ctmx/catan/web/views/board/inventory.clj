@@ -5,12 +5,15 @@
       [ctmx.catan.sse :as sse]
       [ctmx.catan.state :as state]))
 
-(defn- send-form [color resource name count]
+(defn- send-form [color resource name count tp?]
   (let [input-class (str "mr-3 count" resource)
-        hx-include (str ".count" resource)]
+        hx-include (str ".count" resource)
+        other-colors (if tp?
+                       (disj state/valid-color? color "red")
+                       (disj state/valid-color? color))]
     (list
      [:input {:type "number" :name "count" :value 1 :min 1 :max count :class input-class}]
-     (for [other-color (-> state/valid-color? (disj color) seq (conj "bank"))]
+     (for [other-color (-> other-colors seq (conj "bank"))]
        [:button.btn.btn-primary.mr-3
         {:hx-post "inventory:send"
          :hx-vals {:from color :resource resource :to other-color}
@@ -33,7 +36,8 @@
              (string/join " "))
         infra-str
         (apply format "%s cities, %s settlements, %s roads available"
-               (state/get-infrastructure game-name color))]
+               (state/get-infrastructure game-name color))
+        tp? (state/tp? game-name)]
     [:div#inventory.mb-3
      (small-inventory resource-str infra-str)
      [:h2 "Inventory"]
@@ -47,7 +51,7 @@
           [:td (inv resource 0)]
           [:td
            (when (pos? count)
-                 (send-form color resource name count))
+                 (send-form color resource name count tp?))
            [:button.btn.btn-primary.ml-3
             {:hx-post "inventory:pick-up"
              :hx-confirm "Pick up for free from bank?"

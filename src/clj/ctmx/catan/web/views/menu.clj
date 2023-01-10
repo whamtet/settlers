@@ -4,12 +4,12 @@
       [ctmx.core :as ctmx :refer [defcomponent]]
       [ctmx.response :as response]))
 
-(defcomponent ^:endpoint menu [req command game-name ^:boolean random color]
+(defcomponent ^:endpoint menu [req command game-name ^:boolean random ^:boolean tp color]
   (case command
         "create"
         (do
           (assert game-name)
-          (state/add-game game-name random)
+          (state/add-game game-name random tp)
           response/hx-refresh)
         "join"
         (do
@@ -17,10 +17,10 @@
           (assert (state/valid-color? color))
           (assoc response/hx-refresh :session {:game-name game-name :color color}))
         [:div.p-3
-         (for [game (state/games)]
+         (for [[game tp?] (state/games)]
            [:div
             [:h3 game]
-            (for [color state/colors]
+            (for [color (if tp? (rest state/colors) state/colors)]
               [:button.btn.btn-primary.mr-3
                {:hx-confirm "Remember to delete game when you are finished"
                 :hx-post "menu:join"
@@ -34,4 +34,5 @@
           [:label.mr-3 "Game name"]
           [:input.mr-3 {:type "text" :required true :name "game-name"}]
           [:input.mr-3 {:type "checkbox" :checked true :name "random"}] "Random Map"
+          [:input.mx-3 {:type "checkbox" :name "tp"}] "Three player"
           [:input.btn.btn-primary.ml-3 {:type "submit" :value "Create"}]]]))

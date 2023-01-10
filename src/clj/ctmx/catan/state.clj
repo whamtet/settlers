@@ -239,20 +239,22 @@
        (map materials)
        (apply merge-with +)))
 
-(def inventory
-  {"red" {"fields" 1}
+(defn inventory-start [tp?]
+  {"red" (if tp? {} {"fields" 1})
    "white" {"fields" 1}
    "blue" {"forest" 1}
    "orange" {"mountains" 1}
-   "bank" {"fields" 17
+   "bank" {"fields" (if tp? 18 17)
            "forest" 18
            "mountains" 18
            "hills" 19
            "pasture" 19}})
 
-(defn new-game [random?]
+(defn new-game [random? tp?]
   (let [outputs (if random? (shuffle outputs) outputs)
-        terrains (if random? (shuffle terrains) terrains)]
+        terrains (if random? (shuffle terrains) terrains)
+        colors-to-allocate (if tp? (rest colors) colors)
+        inventory-start (inventory-start tp?)]
     {:cards (cards)
      :outputs (vec outputs)
      :terrains (vec (outputs->terrains outputs terrains))
@@ -268,19 +270,26 @@
                      (-> inv
                          (update "bank" #(merge-with - % materials-start))
                          (update color #(merge-with + % materials-start))))
-                   inventory
-                   colors) inventory)
+                   inventory-start
+                   colors-to-allocate)
+                  inventory-start)
+     :tp? tp?
      :knights {}
      :hands {}
      :dice [1 1]}))
 
-(defn add-game [game-name random?]
-  (swap! state assoc game-name (new-game random?)))
+(defn tp? [game-name]
+  (get-in @state [game-name :tp?]))
+
+(defn add-game [game-name random? tp?]
+  (swap! state assoc game-name (new-game random? tp?)))
 
 (defn delete-game [game-name]
   (swap! state dissoc game-name))
 
-(defn games [] (keys @state))
+(defn games []
+  (for [[game-name {:keys [tp?]}] @state]
+    [game-name tp?]))
 
 (defn get-terrain [game-name]
   (let [{:keys [terrains outputs robber]} (@state game-name)]
@@ -360,9 +369,10 @@
   (get-in @state [game-name :dice]))
 
 (defn card-counts [game-name]
-  (for [[player inventory] (get-in @state [game-name :inventory])
-        :when (not= "bank" player)]
-    [player (->> inventory vals (apply +))]))
+  (let [{:keys [tp? inventory]} (@state game-name)
+        exclude (if tp? #{"bank" "red"} #{"bank"})]
+    (for [[player inventory] inventory :when (not (exclude player))]
+      [player (->> inventory vals (apply +))])))
 
 (defn enough? [required available]
   (every?
@@ -683,6 +693,6 @@
   (if (.exists dump-file)
     (->> dump-file slurp read-string (reset! state))
     (do
-      (add-game "asdf" false)
+      (add-game "asdf" false true)
       (doseq [terrain terrains]
         (send-inv! "asdf" "bank" terrain "red" 1)))))
