@@ -627,7 +627,7 @@
 (defn- safe> [a b]
   (or (not b) (> a b)))
 (defn- roll [m]
-  (let [{:keys [nodes edges knight knights longest-road outputs terrains robber inventory]} m
+  (let [{:keys [nodes edges knight knights longest-road outputs terrains robber inventory tp?]} m
         outputs (assoc outputs robber -1)
         dice [(inc (rand-int 6)) (inc (rand-int 6))]
         sum (apply + dice)
@@ -635,7 +635,8 @@
                     :when (= output sum)
                     j (range 6)
                     :let [[color settlement] (-> [i j] node-downgrade nodes)]
-                    :when settlement]
+                    :when (and settlement
+                               (or (not tp?) (not= "red" color)))]
                 {:player color
                  :resource terrain
                  :quantity (if (= "city" settlement) 2 1)})

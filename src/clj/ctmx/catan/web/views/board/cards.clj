@@ -50,7 +50,7 @@
            [:div.mb-2
             [:button.btn.btn-primary.mr-3
              {:hx-post "cards:retrieve"
-              :hx-target "#cards"} "Put back card"]
+              :hx-target "#cards"} "Back into hand"]
             (case title
                   "Monopoly"
                   (for [[resource name] state/inv->name]
