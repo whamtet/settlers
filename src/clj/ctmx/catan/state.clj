@@ -595,7 +595,7 @@
 
 (defn road-length
   ([edges]
-   (->> (for [[edge color] edges]
+   (->> (for [[edge color] edges :when color]
           [color (road-length edges edge color #{})])
         (util/group-by-map first #(->> % (map second) (apply max)))
         (sort-by second >)))
